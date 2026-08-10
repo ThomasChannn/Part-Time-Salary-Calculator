@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兼職工資計算機</title>
+    <style>
+        :root { --primary: #4CAF50; --bg: #f4f4f9; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: var(--primary); }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px; }
+        button:hover { opacity: 0.9; }
+        input, select { padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        
+        /* Screens & Tabs */
+        #app-screen, .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
+        .tab-btn { background: none; color: var(--text); border-radius: 5px 5px 0 0; margin: 0; border: 1px solid transparent; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        /* Calendar */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .day-name { text-align: center; font-weight: bold; padding: 10px 0; background: #eee; }
+        .day-cell { border: 1px solid #ddd; min-height: 100px; padding: 5px; cursor: pointer; background: #fff; border-radius: 4px; }
+        .day-cell:hover { background: #f0f8ff; }
+        .day-date { font-weight: bold; color: #777; margin-bottom: 5px; }
+        .work-badge { padding: 3px 5px; border-radius: 3px; font-size: 12px; color: white; margin-bottom: 3px; display: block; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .close-btn { float: right; cursor: pointer; font-size: 20px; }
+        
+        /* Lists & Tables */
+        .job-list { list-style: none; padding: 0; }
+        .job-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .color-box { width: 15px; height: 15px; display: inline-block; border-radius: 50%; margin-right: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 初始畫面 -->
+    <div id="start-screen">
+        <h1>兼職工資計算機</h1>
+        <p>系統已偵測到本地紀錄，或你可以選擇以下動作：</p>
+        <button onclick="startNew()">開新計算表 (清除舊有資料)</button>
+        <br><br>
+        <label>上載已有資料 (JSON):</label>
+        <input type="file" id="upload-json" accept=".json" onchange="uploadData(event)">
+        <br><br>
+        <button onclick="loadFromLocal()" id="btn-load-local" style="display:none; background-color: #2196F3;">繼續使用本地儲存的資料</button>
+    </div>
+
+    <!-- 主程式畫面 -->
+    <div id="app-screen">
+        <h2 id="sheet-title">我的計算表</h2>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-calendar')">月曆與排班</button>
+            <button class="tab-btn" onclick="switchTab('tab-jobs')">工作設定</button>
+            <button class="tab-btn" onclick="switchTab('tab-summary')">當月結算</button>
+            <button class="tab-btn" onclick="exportData()" style="background-color: #ff9800; color: white;">下載資料(JSON)</button>
+        </div>
+
+        <!-- 月曆分頁 -->
+        <div id="tab-calendar" class="tab-content active">
+            <div class="calendar-header">
+                <button onclick="changeMonth(-1)">&#9664; 上個月</button>
+                <h3 id="current-month-display">2023年 10月</h3>
+                <button onclick="changeMonth(1)">下個月 &#9654;</button>
+            </div>
+            <button onclick="openBatchModal()" style="margin-bottom: 10px; background-color: #9c27b0;">+ 批量增加工作時間</button>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Javascript 生成日曆 -->
+            </div>
+        </div>
+
+        <!-- 工作設定分頁 -->
+        <div id="tab-jobs" class="tab-content">
+            <h3>我的工作列表</h3>
+            <ul id="jobs-ul" class="job-list"></ul>
+            <hr>
+            <h3>新增 / 編輯工作</h3>
+            <input type="hidden" id="job-id">
+            <label>工作名稱:</label>
+            <input type="text" id="job-name" placeholder="例如：餐廳侍應">
+            <label>時薪 ($):</label>
+            <input type="number" id="job-rate" placeholder="50">
+            <label>代表顏色:</label>
+            <input type="color" id="job-color" value="#4CAF50">
+            <label>扣除食飯時間:</label>
+            <select id="job-meal-deduct">
+                <option value="0">不扣除</option>
+                <option value="0.5">扣除 0.5 小時</option>
+                <option value="1">扣除 1 小時</option>
+            </select>
+            <button onclick="saveJob()">儲存工作設定</button>
+            <button onclick="clearJobForm()" style="background: #ccc; color: #333;">清除表格</button>
+        </div>
+
+        <!-- 結算分頁 -->
+        <div id="tab-summary" class="tab-content">
+            <h3>當月薪金結算 (<span id="summary-month-display"></span>)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>工作名稱</th>
+                        <th>總工作時數</th>
+                        <th>特別津貼總額</th>
+                        <th>預計工資 ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-tbody">
+                    <!-- Javascript 生成 -->
+                </tbody>
+            </table>
+            <h2 style="text-align: right; margin-top: 20px;">總薪金: $<span id="total-salary">0</span></h2>
+        </div>
+    </div>
+</div>
+
+<!-- 單日紀錄 Modal -->
+<div id="day-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('day-modal')">&times;</span>
+        <h3 id="modal-date-title">新增/編輯紀錄</h3>
+        <input type="hidden" id="record-date">
+        
+        <label>選擇工作:</label>
+        <select id="record-job"></select>
+        
+        <label>開始時間:</label>
+        <input type="time" id="record-start">
+        
+        <label>結束時間:</label>
+        <input type="time" id="record-end">
+        
+        <label>特別津貼 ($):</label>
+        <input type="number" id="record-allowance" value="0">
+        
+        <button onclick="saveRecord()">儲存紀錄</button>
+        <button onclick="deleteRecord()" style="background: #f44336;">刪除當日此工作紀錄</button>
+    </div>
+</div>
+
+<!-- 批量新增 Modal -->
+<div id="batch-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('batch-modal')">&times;</span>
+        <h3>批量增加工作時間</h3>
+        <p>為選取的日期範圍新增相同的工作與時間</p>
+        
+        <label>選擇工作:</label>
+        <select id="batch-job"></select>
+        
+        <label>開始日期:</label>
+        <input type="date" id="batch-start-date">
+        
+        <label>結束日期:</label>
+        <input type="date" id="batch-end-date">
+        
+        <label>開始時間:</label>
+        <input type="time" id="batch-start">
+        
+        <label>結束時間:</label>
+        <input type="time" id="batch-end">
+        
+        <label>特別津貼 ($):</label>
+        <input type="number" id="batch-allowance" value="0">
+        
+        <button onclick="saveBatchRecords()">套用至所選日期</button>
+    </div>
+</div>
+
+<script>
+    // 核心資料結構
+    let appData = {
+        sheetName: "我的兼職計算表",
+        jobs: [], // { id, name, rate, color, mealDeduct }
+        records: {} // { "YYYY-MM-DD": [ { jobId, start, end, allowance } ] }
+    };
+    
+    let currentDate = new Date();
+
+    // 初始化檢查 LocalStorage
+    window.onload = () => {
+        if (localStorage.getItem('partTimeData')) {
+            document.getElementById('btn-load-local').style.display = 'inline-block';
+        }
+    };
+
+    function startNew() {
+        if(confirm("確定要開啟新計算表嗎？這將會清除目前的本地紀錄。")) {
+            appData = { sheetName: "我的兼職計算表", jobs: [], records: {} };
+            saveToLocal();
+            enterApp();
+        }
+    }
+
+    function loadFromLocal() {
+        const data = localStorage.getItem('partTimeData');
+        if(data) {
+            appData = JSON.parse(data);
+            enterApp();
+        }
+    }
+
+    function saveToLocal() {
+        localStorage.setItem('partTimeData', JSON.stringify(appData));
+    }
+
+    function enterApp() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        updateUI();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        
+        if(tabId === 'tab-summary') generateSummary();
+        if(tabId === 'tab-calendar') renderCalendar();
+    }
+
+    function updateUI() {
+        renderJobs();
+        renderCalendar();
+        populateJobSelects();
+    }
+
+    // --- 工作設定邏輯 ---
+    function saveJob() {
+        const id = document.getElementById('job-id').value || 'job_' + Date.now();
+        const name = document.getElementById('job-name').value;
+        const rate = parseFloat(document.getElementById('job-rate').value);
+        const color = document.getElementById('job-color').value;
+        const mealDeduct = parseFloat(document.getElementById('job-meal-deduct').value);
+
+        if(!name || !rate) return alert("請填寫工作名稱和時薪");
+
+        const jobIndex = appData.jobs.findIndex(j => j.id === id);
+        const newJob = { id, name, rate, color, mealDeduct };
+        
+        if(jobIndex > -1) { appData.jobs[jobIndex] = newJob; } 
+        else { appData.jobs.push(newJob); }
+
+        saveToLocal();
+        clearJobForm();
+        updateUI();
+    }
+
+    function renderJobs() {
+        const ul = document.getElementById('jobs-ul');
+        ul.innerHTML = '';
+        appData.jobs.forEach(job => {
+            const li = document.createElement('li');
+            li.className = 'job-item';
+            li.innerHTML = `
+                <div>
+                    <span class="color-box" style="background:${job.color}"></span>
+                    <strong>${job.name}</strong> ($${job.rate}/hr) - 扣飯鐘: ${job.mealDeduct}hr
+                </div>
+                <div>
+                    <button onclick="editJob('${job.id}')" style="background:#2196F3; padding:5px;">編輯</button>
+                    <button onclick="deleteJob('${job.id}')" style="background:#f44336; padding:5px;">刪除</button>
+                </div>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    function editJob(id) {
+        const job = appData.jobs.find(j => j.id === id);
+        if(!job) return;
+        document.getElementById('job-id').value = job.id;
+        document.getElementById('job-name').value = job.name;
+        document.getElementById('job-rate').value = job.rate;
+        document.getElementById('job-color').value = job.color;
+        document.getElementById('job-meal-deduct').value = job.mealDeduct;
+    }
+
+    function deleteJob(id) {
+        if(confirm("確定刪除此工作設定嗎？(已紀錄的日曆項目可能會缺少資訊)")) {
+            appData.jobs = appData.jobs.filter(j => j.id !== id);
+            saveToLocal();
+            updateUI();
+        }
+    }
+
+    function clearJobForm() {
+        document.getElementById('job-id').value = '';
+        document.getElementById('job-name').value = '';
+        document.getElementById('job-rate').value = '';
+        document.getElementById('job-color').value = '#4CAF50';
+        document.getElementById('job-meal-deduct').value = '0';
+    }
+
+    function populateJobSelects() {
+        const opts = appData.jobs.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
+        document.getElementById('record-job').innerHTML = opts;
+        document.getElementById('batch-job').innerHTML = opts;
+    }
+
+    // --- 月曆與紀錄邏輯 ---
+    function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        document.getElementById('current-month-display').innerText = `${year}年 ${month + 1}月`;
+        
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '<div class="day-name">日</div><div class="day-name">一</div><div class="day-name">二</div><div class="day-name">三</div><div class="day-name">四</div><div class="day-name">五</div><div class="day-name">六</div>';
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        for(let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="day-cell" style="background:#fafafa; border:none;"></div>`;
+        }
+        
+        for(let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const records = appData.records[dateStr] || [];
+            
+            let html = `<div class="day-cell" onclick="openDayModal('${dateStr}')">
+                        <div class="day-date">${day}</div>`;
+            
+            records.forEach((rec, idx) => {
+                const job = appData.jobs.find(j => j.id === rec.jobId);
+                const color = job ? job.color : '#999';
+                const name = job ? job.name : '已刪除工作';
+                html += `<span class="work-badge" style="background:${color}">${name} <br> ${rec.start}-${rec.end}</span>`;
+            });
+            
+            html += `</div>`;
+            grid.innerHTML += html;
+        }
+    }
+
+    function openDayModal(dateStr) {
+        if(appData.jobs.length === 0) return alert("請先到「工作設定」新增至少一份工作。");
+        document.getElementById('day-modal').style.display = 'flex';
+        document.getElementById('modal-date-title').innerText = `編輯紀錄：${dateStr}`;
+        document.getElementById('record-date').value = dateStr;
+        
+        const existingRec = (appData.records[dateStr] || [])[0]; // 簡化：假設每日每份工作只選第一筆顯示，若需多筆需更複雜的UI
+        if(existingRec) {
+            document.getElementById('record-job').value = existingRec.jobId;
+            document.getElementById('record-start').value = existingRec.start;
+            document.getElementById('record-end').value = existingRec.end;
+            document.getElementById('record-allowance').value = existingRec.allowance || 0;
+        } else {
+            document.getElementById('record-start').value = '09:00';
+            document.getElementById('record-end').value = '18:00';
+            document.getElementById('record-allowance').value = '0';
+        }
+    }
+
+    function saveRecord() {
+        const date = document.getElementById('record-date').value;
+        const jobId = document.getElementById('record-job').value;
+        const start = document.getElementById('record-start').value;
+        const end = document.getElementById('record-end').value;
+        const allowance = parseFloat(document.getElementById('record-allowance').value) || 0;
+        
+        if(!start || !end) return alert("請填寫時間");
+        
+        if(!appData.records[date]) appData.records[date] = [];
+        
+        // 尋找是否已有同工作紀錄，有的話覆蓋，沒有則新增
+        const idx = appData.records[date].findIndex(r => r.jobId === jobId);
+        const newRec = { jobId, start, end, allowance };
+        if(idx > -1) appData.records[date][idx] = newRec;
+        else appData.records[date].push(newRec);
+        
+        saveToLocal();
+        closeModal('day-modal');
+        renderCalendar();
+    }
+
+    function deleteRecord() {
+        const date = document.getElementById('record-date').value;
+        const jobId = document.getElementById('record-job').value;
+        if(appData.records[date]) {
+            appData.records[date] = appData.records[date].filter(r => r.jobId !== jobId);
+            if(appData.records[date].length === 0) delete appData.records[date];
+            saveToLocal();
+            closeModal('day-modal');
+            renderCalendar();
+        }
+    }
+
+    // --- 批量新增邏輯 ---
+    function openBatchModal() {
+        if(appData.jobs.length === 0) return alert("請先新增工作。");
+        document.getElementById('batch-modal').style.display = 'flex';
+    }
+
+    function saveBatchRecords() {
+        const jobId = document.getElementById('batch-job').value;
+        const startDate = document.getElementById('batch-start-date').value;
+        const endDate = document.getElementById('batch-end-date').value;
+        const start = document.getElementById('batch-start').value;
+        const end = document.getElementById('batch-end').value;
+        const allowance = parseFloat(document.getElementById('batch-allowance').value) || 0;
+
+        if(!startDate || !endDate || !start || !end) return alert("請填滿所有日期與時間欄位");
+
+        let curr = new Date(startDate);
+        let endD = new Date(endDate);
+        
+        while(curr <= endD) {
+            const dStr = curr.toISOString().split('T')[0];
+            if(!appData.records[dStr]) appData.records[dStr] = [];
+            const idx = appData.records[dStr].findIndex(r => r.jobId === jobId);
+            const newRec = { jobId, start, end, allowance };
+            if(idx > -1) appData.records[dStr][idx] = newRec;
+            else appData.records[dStr].push(newRec);
+            
+            curr.setDate(curr.getDate() + 1);
+        }
+        
+        saveToLocal();
+        closeModal('batch-modal');
+        renderCalendar();
+        alert("批量新增完成！");
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // --- 結算與匯出邏輯 ---
+    function calcHours(start, end) {
+        const s = start.split(':'); const e = end.split(':');
+        const sTime = new Date(2000,0,1, s[0], s[1]);
+        let eTime = new Date(2000,0,1, e[0], e[1]);
+        if(eTime < sTime) eTime.setDate(eTime.getDate() + 1); // 跨夜
+        return (eTime - sTime) / (1000 * 60 * 60);
+    }
+
+    function generateSummary() {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const prefix = `${year}-${month}`;
+        document.getElementById('summary-month-display').innerText = `${year}年 ${month}月`;
+        
+        let summary = {};
+        appData.jobs.forEach(j => {
+            summary[j.id] = { name: j.name, rate: j.rate, totalHours: 0, totalAllowance: 0, salary: 0, mealDeduct: j.mealDeduct };
+        });
+
+        for(let date in appData.records) {
+            if(date.startsWith(prefix)) {
+                appData.records[date].forEach(rec => {
+                    if(summary[rec.jobId]) {
+                        let hours = calcHours(rec.start, rec.end) - summary[rec.jobId].mealDeduct;
+                        if(hours < 0) hours = 0;
+                        summary[rec.jobId].totalHours += hours;
+                        summary[rec.jobId].totalAllowance += rec.allowance;
+                        summary[rec.jobId].salary += (hours * summary[rec.jobId].rate) + rec.allowance;
+                    }
+                });
+            }
+        }
+
+        const tbody = document.getElementById('summary-tbody');
+        tbody.innerHTML = '';
+        let grandTotal = 0;
+
+        for(let id in summary) {
+            const s = summary[id];
+            if(s.totalHours > 0 || s.totalAllowance > 0) {
+                grandTotal += s.salary;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.totalHours.toFixed(1)}</td>
+                        <td>$${s.totalAllowance}</td>
+                        <td>$${s.salary.toFixed(1)}</td>
+                    </tr>
+                `;
+            }
+        }
+        document.getElementById('total-salary').innerText = grandTotal.toFixed(1);
+    }
+
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", `兼職紀錄_${new Date().getTime()}.json`);
+        dlAnchorElem.click();
+    }
+
+    function uploadData(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                appData = JSON.parse(e.target.result);
+                saveToLocal();
+                enterApp();
+            } catch(err) {
+                alert("檔案格式錯誤！請確保是有效的 JSON 檔。");
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>
