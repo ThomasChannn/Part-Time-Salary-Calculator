@@ -17,6 +17,7 @@
             --hover-bg: #f0f8ff;
             --modal-bg: #fff;
             --dim-text: #777;
+            --today-bg: rgba(76, 175, 80, 0.1); /* 今日格子的背景 */
         }
         
         /* 黑夜模式變數 */
@@ -30,6 +31,7 @@
             --hover-bg: #2a2a2a;
             --modal-bg: #222;
             --dim-text: #aaa;
+            --today-bg: rgba(76, 175, 80, 0.2); 
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
@@ -43,7 +45,6 @@
         h1, h2, h3 { color: var(--primary); }
         button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px 0; }
         button:hover { opacity: 0.9; }
-        /* input font-size 16px 防止 iOS 自動放大 */
         input, select { padding: 10px; margin: 5px 0 15px 0; border: 1px solid var(--border-color); border-radius: 4px; width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); color-scheme: light dark; font-size: 16px; }
         hr { border: 0; border-top: 1px solid var(--border-color); margin: 20px 0; }
         
@@ -62,10 +63,16 @@
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
         .day-name { text-align: center; font-weight: bold; padding: 10px 0; background: var(--table-head); border-radius: 4px; font-size: 14px; }
-        .day-cell { border: 1px solid var(--border-color); min-height: 90px; padding: 5px; cursor: pointer; background: var(--container-bg); border-radius: 4px; overflow: hidden; word-wrap: break-word; }
+        .day-cell { border: 1px solid var(--border-color); min-height: 90px; padding: 5px; cursor: pointer; background: var(--container-bg); border-radius: 4px; overflow: hidden; word-wrap: break-word; position: relative; }
         .day-cell.empty-cell { background: var(--table-head); border: none; cursor: default; }
         .day-cell:not(.empty-cell):hover { background: var(--hover-bg); }
-        .day-date { font-weight: bold; color: var(--dim-text); margin-bottom: 5px; font-size: 14px; }
+        
+        .day-date { font-weight: bold; color: var(--dim-text); margin-bottom: 5px; font-size: 14px; display: inline-block; }
+        
+        /* 今日標記樣式 */
+        .today-cell { border: 2px solid var(--primary) !important; background-color: var(--today-bg) !important; }
+        .today-date { background-color: var(--primary); color: white !important; border-radius: 50%; width: 24px; height: 24px; line-height: 24px; text-align: center; }
+
         .work-badge { padding: 4px; border-radius: 3px; font-size: 12px; color: white; margin-bottom: 3px; display: block; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); line-height: 1.2; word-break: break-all; }
         
         /* Modals */
@@ -78,9 +85,8 @@
         .job-item { border: 1px solid var(--border-color); padding: 12px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .color-box { width: 16px; height: 16px; display: inline-block; border-radius: 50%; margin-right: 8px; vertical-align: middle; border: 1px solid #ccc; }
         
-        /* Responsive Table Wrapper */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 5px; border: 1px solid var(--border-color); }
-        table { width: 100%; border-collapse: collapse; min-width: 450px; } /* 保持最低寬度防擠壓 */
+        table { width: 100%; border-collapse: collapse; min-width: 450px; } 
         th, td { border: 1px solid var(--border-color); padding: 12px 10px; text-align: left; }
         th { background-color: var(--table-head); white-space: nowrap; }
         
@@ -97,24 +103,21 @@
         .flex-buttons { display: flex; gap: 5px; width: 100%; }
         .flex-buttons button { flex: 1; }
 
-        /* --- 手機版專屬優化 (Media Queries) --- */
+        /* Mobile Media Queries */
         @media (max-width: 600px) {
             body { padding: 10px; }
             .container { padding: 15px; }
-            
             .header-top { flex-direction: column; align-items: flex-start; gap: 10px; }
             .theme-toggle { width: 100%; padding: 12px; }
-            
             .calendar-grid { gap: 2px; }
             .day-name { padding: 5px 0; font-size: 12px; }
             .day-cell { min-height: 70px; padding: 2px; }
             .day-date { font-size: 12px; margin-bottom: 2px; }
+            .today-date { width: 20px; height: 20px; line-height: 20px; }
             .work-badge { font-size: 10px; padding: 2px; transform: scale(0.95); transform-origin: left top; margin-bottom: 1px; }
-            
             .job-item { flex-direction: column; align-items: flex-start; }
             .job-item > div:last-child { width: 100%; display: flex; gap: 5px; }
             .job-item > div:last-child button { flex: 1; margin: 0; }
-            
             .expand-hint { display: block; margin-left: 0; margin-top: 5px; }
         }
     </style>
@@ -410,7 +413,6 @@
         document.getElementById('job-color').value = job.color;
         document.getElementById('job-meal-deduct').value = job.mealDeduct;
         
-        // 自動捲動到編輯區
         document.getElementById('job-name').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -453,6 +455,10 @@
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
+        // 取得今日實際日期做比對
+        const realToday = new Date();
+        const isCurrentMonthView = (year === realToday.getFullYear() && month === realToday.getMonth());
+        
         for(let i = 0; i < firstDay; i++) {
             grid.innerHTML += `<div class="day-cell empty-cell"></div>`;
         }
@@ -461,8 +467,12 @@
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const records = appData.records[dateStr] || [];
             
-            let html = `<div class="day-cell" onclick="openDayModal('${dateStr}')">
-                        <div class="day-date">${day}</div>`;
+            let isToday = (isCurrentMonthView && day === realToday.getDate());
+            let cellClass = isToday ? "day-cell today-cell" : "day-cell";
+            let dateClass = isToday ? "day-date today-date" : "day-date";
+            
+            let html = `<div class="${cellClass}" onclick="openDayModal('${dateStr}')">
+                        <div class="${dateClass}">${day}</div>`;
             
             records.forEach((rec) => {
                 const job = appData.jobs.find(j => j.id === rec.jobId);
