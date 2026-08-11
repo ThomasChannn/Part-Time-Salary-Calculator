@@ -2,10 +2,10 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>兼職工資計算機</title>
     <style>
-        /* CSS 變數定義 (預設為日曆模式) */
+        /* CSS 變數定義 */
         :root { 
             --primary: #4CAF50; 
             --bg: #f4f4f9; 
@@ -32,94 +32,134 @@
             --dim-text: #aaa;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; }
-        .container { max-width: 900px; margin: 0 auto; background: var(--container-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--container-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Header & Theme */
+        .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; }
+        .header-top h1, .header-top h2 { margin: 0; color: var(--primary); }
+        .theme-toggle { background: #555; margin: 0; }
         
         h1, h2, h3 { color: var(--primary); }
-        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px 0; }
         button:hover { opacity: 0.9; }
-        input, select { padding: 8px; margin: 5px 0; border: 1px solid var(--border-color); border-radius: 4px; width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); color-scheme: light dark; }
+        /* input font-size 16px 防止 iOS 自動放大 */
+        input, select { padding: 10px; margin: 5px 0 15px 0; border: 1px solid var(--border-color); border-radius: 4px; width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); color-scheme: light dark; font-size: 16px; }
         hr { border: 0; border-top: 1px solid var(--border-color); margin: 20px 0; }
-
-        .theme-toggle { position: absolute; top: 20px; right: 20px; background: #555; }
         
         /* Screens & Tabs */
         #app-screen, .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { background: none; color: var(--text); border-radius: 5px 5px 0 0; margin: 0; border: 1px solid transparent; }
+        
+        /* Mobile-friendly Tabs */
+        .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .tab-btn { background: none; color: var(--text); border-radius: 5px 5px 0 0; margin: 0; border: 1px solid transparent; flex: 0 0 auto; padding: 12px 15px; }
         .tab-btn.active { background: var(--primary); color: white; }
+        .tabs::-webkit-scrollbar { height: 4px; }
+        .tabs::-webkit-scrollbar-thumb { background-color: var(--primary); border-radius: 4px; }
         
         /* Calendar */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .day-name { text-align: center; font-weight: bold; padding: 10px 0; background: var(--table-head); border-radius: 4px; }
-        .day-cell { border: 1px solid var(--border-color); min-height: 100px; padding: 5px; cursor: pointer; background: var(--container-bg); border-radius: 4px; }
+        .day-name { text-align: center; font-weight: bold; padding: 10px 0; background: var(--table-head); border-radius: 4px; font-size: 14px; }
+        .day-cell { border: 1px solid var(--border-color); min-height: 90px; padding: 5px; cursor: pointer; background: var(--container-bg); border-radius: 4px; overflow: hidden; word-wrap: break-word; }
         .day-cell.empty-cell { background: var(--table-head); border: none; cursor: default; }
         .day-cell:not(.empty-cell):hover { background: var(--hover-bg); }
-        .day-date { font-weight: bold; color: var(--dim-text); margin-bottom: 5px; }
-        .work-badge { padding: 3px 5px; border-radius: 3px; font-size: 12px; color: white; margin-bottom: 3px; display: block; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .day-date { font-weight: bold; color: var(--dim-text); margin-bottom: 5px; font-size: 14px; }
+        .work-badge { padding: 4px; border-radius: 3px; font-size: 12px; color: white; margin-bottom: 3px; display: block; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); line-height: 1.2; word-break: break-all; }
         
         /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; }
-        .modal-content { background: var(--modal-bg); padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; color: var(--text); }
-        .close-btn { float: right; cursor: pointer; font-size: 24px; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--modal-bg); padding: 20px; border-radius: 8px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; color: var(--text); }
+        .close-btn { float: right; cursor: pointer; font-size: 28px; font-weight: bold; line-height: 1; margin-top: -5px; }
         
         /* Lists & Tables */
         .job-list { list-style: none; padding: 0; }
-        .job-item { border: 1px solid var(--border-color); padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .color-box { width: 15px; height: 15px; display: inline-block; border-radius: 50%; margin-right: 10px; vertical-align: middle; border: 1px solid #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: left; }
-        th { background-color: var(--table-head); }
+        .job-item { border: 1px solid var(--border-color); padding: 12px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .color-box { width: 16px; height: 16px; display: inline-block; border-radius: 50%; margin-right: 8px; vertical-align: middle; border: 1px solid #ccc; }
+        
+        /* Responsive Table Wrapper */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 5px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; min-width: 450px; } /* 保持最低寬度防擠壓 */
+        th, td { border: 1px solid var(--border-color); padding: 12px 10px; text-align: left; }
+        th { background-color: var(--table-head); white-space: nowrap; }
         
         /* Summary Expansion Detail */
         .clickable-row { cursor: pointer; transition: background 0.2s; }
         .clickable-row:hover { background-color: var(--hover-bg); }
         .expand-hint { font-size: 12px; color: var(--dim-text); margin-left: 8px; font-weight: normal; }
         .detail-row td { background-color: var(--hover-bg); padding: 0; border-top: none; }
-        .detail-table { width: 100%; border: none; margin: 0; background: transparent; }
+        .detail-table { width: 100%; border: none; margin: 0; background: transparent; min-width: 100%; }
         .detail-table th, .detail-table td { border: none; border-bottom: 1px dashed var(--border-color); padding: 8px; font-size: 13px; }
         .detail-table th { background: transparent; font-weight: 600; color: var(--dim-text); }
         .detail-table tr:last-child td { border-bottom: none; }
+
+        .flex-buttons { display: flex; gap: 5px; width: 100%; }
+        .flex-buttons button { flex: 1; }
+
+        /* --- 手機版專屬優化 (Media Queries) --- */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            
+            .header-top { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .theme-toggle { width: 100%; padding: 12px; }
+            
+            .calendar-grid { gap: 2px; }
+            .day-name { padding: 5px 0; font-size: 12px; }
+            .day-cell { min-height: 70px; padding: 2px; }
+            .day-date { font-size: 12px; margin-bottom: 2px; }
+            .work-badge { font-size: 10px; padding: 2px; transform: scale(0.95); transform-origin: left top; margin-bottom: 1px; }
+            
+            .job-item { flex-direction: column; align-items: flex-start; }
+            .job-item > div:last-child { width: 100%; display: flex; gap: 5px; }
+            .job-item > div:last-child button { flex: 1; margin: 0; }
+            
+            .expand-hint { display: block; margin-left: 0; margin-top: 5px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button class="theme-toggle" onclick="toggleDarkMode()" id="theme-btn">🌙 黑夜模式</button>
     
     <!-- 初始畫面 -->
     <div id="start-screen">
-        <h1>兼職工資計算機</h1>
+        <div class="header-top">
+            <h1>兼職工資計算機</h1>
+            <button class="theme-toggle" onclick="toggleDarkMode()" id="theme-btn-start">🌙 黑夜模式</button>
+        </div>
         <p>系統已偵測到本地紀錄，或你可以選擇以下動作：</p>
-        <button onclick="startNew()">開新計算表 (清除舊有資料)</button>
+        <button onclick="startNew()" style="width: 100%; padding: 12px;">開新計算表 (清除舊資料)</button>
         <br><br>
         <label>上載已有資料 (JSON):</label>
         <input type="file" id="upload-json" accept=".json" onchange="uploadData(event)">
         <br><br>
-        <button onclick="loadFromLocal()" id="btn-load-local" style="display:none; background-color: #2196F3; font-size: 16px; padding: 12px 20px;">繼續使用本地儲存的資料</button>
+        <button onclick="loadFromLocal()" id="btn-load-local" style="display:none; background-color: #2196F3; font-size: 16px; padding: 15px; width: 100%;">👉 繼續使用本地儲存的資料</button>
     </div>
 
     <!-- 主程式畫面 -->
     <div id="app-screen">
-        <h2 id="sheet-title">我的計算表</h2>
+        <div class="header-top">
+            <h2 id="sheet-title">我的計算表</h2>
+            <button class="theme-toggle" onclick="toggleDarkMode()" id="theme-btn-app">🌙 黑夜模式</button>
+        </div>
         
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-calendar')">月曆與排班</button>
+            <button class="tab-btn active" onclick="switchTab('tab-calendar')">月曆排班</button>
             <button class="tab-btn" onclick="switchTab('tab-jobs')">工作設定</button>
             <button class="tab-btn" onclick="switchTab('tab-summary')">當月結算</button>
-            <button class="tab-btn" onclick="exportData()" style="background-color: #ff9800; color: white;">下載資料(JSON)</button>
+            <button class="tab-btn" onclick="exportData()" style="background-color: #ff9800; color: white;">下載資料</button>
         </div>
 
         <!-- 月曆分頁 -->
         <div id="tab-calendar" class="tab-content active">
             <div class="calendar-header">
                 <button onclick="changeMonth(-1)">&#9664; 上個月</button>
-                <h3 id="current-month-display">2023年 10月</h3>
+                <h3 id="current-month-display" style="margin:0;">2023年 10月</h3>
                 <button onclick="changeMonth(1)">下個月 &#9654;</button>
             </div>
-            <button onclick="openBatchModal()" style="margin-bottom: 10px; background-color: #9c27b0;">+ 批量增加工作時間</button>
+            <button onclick="openBatchModal()" style="margin-bottom: 15px; background-color: #9c27b0; width: 100%;">+ 批量增加工作時間</button>
             <div class="calendar-grid" id="calendar-grid">
                 <!-- Javascript 生成日曆 -->
             </div>
@@ -137,34 +177,38 @@
             <label>時薪 ($):</label>
             <input type="number" id="job-rate" placeholder="50">
             <label>代表顏色:</label>
-            <input type="color" id="job-color" value="#4CAF50" style="padding: 2px; height: 40px;">
+            <input type="color" id="job-color" value="#4CAF50" style="padding: 2px; height: 45px;">
             <label>扣除食飯時間:</label>
             <select id="job-meal-deduct">
                 <option value="0">不扣除</option>
                 <option value="0.5">扣除 0.5 小時</option>
                 <option value="1">扣除 1 小時</option>
             </select>
-            <button onclick="saveJob()">儲存工作設定</button>
-            <button onclick="clearJobForm()" style="background: #777; color: white;">清除表格</button>
+            <div class="flex-buttons">
+                <button onclick="saveJob()">儲存工作設定</button>
+                <button onclick="clearJobForm()" style="background: #777; color: white;">清除表格</button>
+            </div>
         </div>
 
         <!-- 結算分頁 -->
         <div id="tab-summary" class="tab-content">
             <h3>當月薪金結算 (<span id="summary-month-display"></span>)</h3>
-            <p style="font-size: 13px; color: var(--dim-text);">提示：點擊下方工作名稱可以展開每日的工資明細。</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>工作名稱</th>
-                        <th>總時數</th>
-                        <th>津貼總額</th>
-                        <th>預計工資 ($)</th>
-                    </tr>
-                </thead>
-                <tbody id="summary-tbody">
-                    <!-- Javascript 生成 -->
-                </tbody>
-            </table>
+            <p style="font-size: 13px; color: var(--dim-text);">提示：點擊下方工作列可展開每日明細。若表格顯示不全，可左右滑動查看。</p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工作名稱</th>
+                            <th>總時數</th>
+                            <th>津貼</th>
+                            <th>預計工資 ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-tbody">
+                        <!-- Javascript 生成 -->
+                    </tbody>
+                </table>
+            </div>
             <h2 style="text-align: right; margin-top: 20px;">當月總薪金: $<span id="total-salary">0</span></h2>
         </div>
     </div>
@@ -174,7 +218,7 @@
 <div id="day-modal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('day-modal')">&times;</span>
-        <h3 id="modal-date-title">新增/編輯紀錄</h3>
+        <h3 id="modal-date-title" style="margin-top:0;">新增/編輯紀錄</h3>
         <input type="hidden" id="record-date">
         
         <label>選擇工作:</label>
@@ -189,9 +233,9 @@
         <label>特別津貼 ($):</label>
         <input type="number" id="record-allowance" value="0">
         
-        <div style="margin-top: 15px;">
-            <button onclick="saveRecord()">儲存紀錄</button>
-            <button onclick="deleteRecord()" style="background: #f44336; float:right;">刪除紀錄</button>
+        <div class="flex-buttons" style="margin-top: 10px;">
+            <button onclick="saveRecord()">儲存</button>
+            <button onclick="deleteRecord()" style="background: #f44336;">刪除紀錄</button>
         </div>
     </div>
 </div>
@@ -200,28 +244,38 @@
 <div id="batch-modal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('batch-modal')">&times;</span>
-        <h3>批量增加工作時間</h3>
-        <p style="font-size: 13px; color: var(--dim-text);">為選取的日期範圍新增相同的工作與時間（如已有紀錄將被覆蓋）</p>
+        <h3 style="margin-top:0;">批量增加時間</h3>
+        <p style="font-size: 13px; color: var(--dim-text); margin-top: 0;">為選取的日期範圍新增工作（如有舊紀錄將被覆蓋）</p>
         
         <label>選擇工作:</label>
         <select id="batch-job"></select>
         
-        <label>開始日期:</label>
-        <input type="date" id="batch-start-date">
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <label>開始日期:</label>
+                <input type="date" id="batch-start-date">
+            </div>
+            <div style="flex:1;">
+                <label>結束日期:</label>
+                <input type="date" id="batch-end-date">
+            </div>
+        </div>
         
-        <label>結束日期:</label>
-        <input type="date" id="batch-end-date">
-        
-        <label>開始時間:</label>
-        <input type="time" id="batch-start">
-        
-        <label>結束時間:</label>
-        <input type="time" id="batch-end">
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <label>開始時間:</label>
+                <input type="time" id="batch-start">
+            </div>
+            <div style="flex:1;">
+                <label>結束時間:</label>
+                <input type="time" id="batch-end">
+            </div>
+        </div>
         
         <label>特別津貼 ($):</label>
         <input type="number" id="batch-allowance" value="0">
         
-        <button onclick="saveBatchRecords()" style="margin-top: 15px; width: 100%;">套用至所選日期</button>
+        <button onclick="saveBatchRecords()" style="margin-top: 10px; width: 100%;">套用至所選日期</button>
     </div>
 </div>
 
@@ -229,8 +283,8 @@
     // 核心資料結構
     let appData = {
         sheetName: "我的兼職計算表",
-        jobs: [], // { id, name, rate, color, mealDeduct }
-        records: {} // { "YYYY-MM-DD": [ { jobId, start, end, allowance } ] }
+        jobs: [], 
+        records: {} 
     };
     
     let currentDate = new Date();
@@ -241,19 +295,26 @@
             document.getElementById('btn-load-local').style.display = 'inline-block';
         }
         
-        // 載入主題偏好
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-theme');
-            document.getElementById('theme-btn').innerText = "☀️ 白天模式";
+            updateThemeButtons(true);
         }
     };
+
+    function updateThemeButtons(isDark) {
+        const text = isDark ? "☀️ 白天模式" : "🌙 黑夜模式";
+        document.getElementById('theme-btn-start').innerText = text;
+        if(document.getElementById('theme-btn-app')) {
+            document.getElementById('theme-btn-app').innerText = text;
+        }
+    }
 
     function toggleDarkMode() {
         const body = document.body;
         body.classList.toggle('dark-theme');
         const isDark = body.classList.contains('dark-theme');
         localStorage.setItem('darkMode', isDark);
-        document.getElementById('theme-btn').innerText = isDark ? "☀️ 白天模式" : "🌙 黑夜模式";
+        updateThemeButtons(isDark);
     }
 
     function startNew() {
@@ -328,11 +389,12 @@
             li.innerHTML = `
                 <div>
                     <span class="color-box" style="background:${job.color}"></span>
-                    <strong>${job.name}</strong> ($${job.rate}/hr) - 扣飯鐘: ${job.mealDeduct}hr
+                    <strong>${job.name}</strong> ($${job.rate}/hr)<br>
+                    <span style="font-size:13px; color:var(--dim-text);">扣飯鐘: ${job.mealDeduct} hr</span>
                 </div>
                 <div>
-                    <button onclick="editJob('${job.id}')" style="background:#2196F3; padding:5px 10px;">修改</button>
-                    <button onclick="deleteJob('${job.id}')" style="background:#f44336; padding:5px 10px;">刪除</button>
+                    <button onclick="editJob('${job.id}')" style="background:#2196F3;">修改</button>
+                    <button onclick="deleteJob('${job.id}')" style="background:#f44336;">刪除</button>
                 </div>
             `;
             ul.appendChild(li);
@@ -347,6 +409,9 @@
         document.getElementById('job-rate').value = job.rate;
         document.getElementById('job-color').value = job.color;
         document.getElementById('job-meal-deduct').value = job.mealDeduct;
+        
+        // 自動捲動到編輯區
+        document.getElementById('job-name').scrollIntoView({ behavior: 'smooth' });
     }
 
     function deleteJob(id) {
@@ -367,8 +432,8 @@
 
     function populateJobSelects() {
         const opts = appData.jobs.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
-        document.getElementById('record-job').innerHTML = opts;
-        document.getElementById('batch-job').innerHTML = opts;
+        document.getElementById('record-job').innerHTML = opts || '<option value="">請先新增工作</option>';
+        document.getElementById('batch-job').innerHTML = opts || '<option value="">請先新增工作</option>';
     }
 
     // --- 月曆與紀錄邏輯 ---
@@ -388,12 +453,10 @@
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        // 補空白格
         for(let i = 0; i < firstDay; i++) {
             grid.innerHTML += `<div class="day-cell empty-cell"></div>`;
         }
         
-        // 渲染日期格
         for(let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const records = appData.records[dateStr] || [];
@@ -440,6 +503,7 @@
         const allowance = parseFloat(document.getElementById('record-allowance').value) || 0;
         
         if(!start || !end) return alert("請填寫時間");
+        if(!jobId) return alert("請選擇工作");
         
         if(!appData.records[date]) appData.records[date] = [];
         
@@ -480,9 +544,12 @@
         const allowance = parseFloat(document.getElementById('batch-allowance').value) || 0;
 
         if(!startDate || !endDate || !start || !end) return alert("請填滿所有日期與時間欄位");
+        if(!jobId) return alert("請選擇工作");
 
         let curr = new Date(startDate);
         let endD = new Date(endDate);
+        
+        if(curr > endD) return alert("開始日期不能晚於結束日期");
         
         while(curr <= endD) {
             const dStr = curr.toISOString().split('T')[0];
@@ -508,7 +575,7 @@
         const s = start.split(':'); const e = end.split(':');
         const sTime = new Date(2000,0,1, s[0], s[1]);
         let eTime = new Date(2000,0,1, e[0], e[1]);
-        if(eTime < sTime) eTime.setDate(eTime.getDate() + 1); // 跨夜處理
+        if(eTime < sTime) eTime.setDate(eTime.getDate() + 1); // 跨夜
         return (eTime - sTime) / (1000 * 60 * 60);
     }
 
@@ -518,13 +585,11 @@
         const prefix = `${year}-${month}`;
         document.getElementById('summary-month-display').innerText = `${year}年 ${month}月`;
         
-        // 準備結構，增加 details 陣列裝載每日紀錄
         let summary = {};
         appData.jobs.forEach(j => {
             summary[j.id] = { name: j.name, rate: j.rate, totalHours: 0, totalAllowance: 0, salary: 0, mealDeduct: j.mealDeduct, details: [] };
         });
 
-        // 確保日期按順序排列
         const sortedDates = Object.keys(appData.records).sort();
 
         sortedDates.forEach(date => {
@@ -540,9 +605,8 @@
                         summary[rec.jobId].totalAllowance += rec.allowance;
                         summary[rec.jobId].salary += dailySalary;
                         
-                        // 記錄每日明細
                         summary[rec.jobId].details.push({
-                            date: date,
+                            date: date.substring(5), // 隱藏年份省空間
                             start: rec.start,
                             end: rec.end,
                             hours: hours,
@@ -563,44 +627,44 @@
             if(s.totalHours > 0 || s.totalAllowance > 0) {
                 grandTotal += s.salary;
                 
-                // 每日明細 HTML
                 const detailsHTML = s.details.map(d => `
                     <tr>
                         <td>${d.date}</td>
-                        <td>${d.start} - ${d.end}</td>
-                        <td>${d.hours.toFixed(1)}</td>
+                        <td>${d.start}-${d.end}</td>
+                        <td>${d.hours.toFixed(1)}h</td>
                         <td>$${d.allowance}</td>
                         <td><strong>$${d.dailySalary.toFixed(1)}</strong></td>
                     </tr>
                 `).join('');
 
-                // 產生 主行 與 隱藏的明細行
                 tbody.innerHTML += `
-                    <tr class="clickable-row" onclick="toggleDetails('detail-${id}')" title="點擊展開/收起每日明細">
+                    <tr class="clickable-row" onclick="toggleDetails('detail-${id}')">
                         <td>
                             <strong>${s.name}</strong> 
-                            <span class="expand-hint">▼ 展開明細</span>
+                            <span class="expand-hint">▼ 展開</span>
                         </td>
-                        <td>${s.totalHours.toFixed(1)} hr</td>
+                        <td>${s.totalHours.toFixed(1)}</td>
                         <td>$${s.totalAllowance}</td>
                         <td><strong>$${s.salary.toFixed(1)}</strong></td>
                     </tr>
                     <tr id="detail-${id}" class="detail-row" style="display:none;">
                         <td colspan="4">
-                            <table class="detail-table">
-                                <thead>
-                                    <tr>
-                                        <th>日期</th>
-                                        <th>時間</th>
-                                        <th>實際時數</th>
-                                        <th>當日津貼</th>
-                                        <th>當日工資</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${detailsHTML}
-                                </tbody>
-                            </table>
+                            <div class="table-responsive" style="border:none;">
+                                <table class="detail-table">
+                                    <thead>
+                                        <tr>
+                                            <th>日期</th>
+                                            <th>時間</th>
+                                            <th>時數</th>
+                                            <th>津貼</th>
+                                            <th>工資</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${detailsHTML}
+                                    </tbody>
+                                </table>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -611,11 +675,7 @@
 
     function toggleDetails(rowId) {
         const row = document.getElementById(rowId);
-        if(row.style.display === 'none') {
-            row.style.display = 'table-row';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = (row.style.display === 'none') ? 'table-row' : 'none';
     }
 
     function exportData() {
