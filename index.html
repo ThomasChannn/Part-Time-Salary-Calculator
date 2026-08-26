@@ -17,7 +17,7 @@
             --hover-bg: #f0f8ff;
             --modal-bg: #fff;
             --dim-text: #777;
-            --today-bg: rgba(76, 175, 80, 0.1); /* 今日格子的背景 */
+            --today-bg: rgba(76, 175, 80, 0.1); 
         }
         
         /* 黑夜模式變數 */
@@ -80,6 +80,11 @@
         .modal-content { background: var(--modal-bg); padding: 20px; border-radius: 8px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; color: var(--text); }
         .close-btn { float: right; cursor: pointer; font-size: 28px; font-weight: bold; line-height: 1; margin-top: -5px; }
         
+        /* Weekday Selector for Batch Add */
+        .weekday-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; margin-top: 5px; }
+        .weekday-selector label { display: flex; align-items: center; background: var(--table-head); padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; font-size: 14px; flex: 1; min-width: 40px; justify-content: center; }
+        .weekday-selector input { margin: 0 5px 0 0; width: auto; height: auto; }
+        
         /* Lists & Tables */
         .job-list { list-style: none; padding: 0; }
         .job-item { border: 1px solid var(--border-color); padding: 12px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -119,6 +124,7 @@
             .job-item > div:last-child { width: 100%; display: flex; gap: 5px; }
             .job-item > div:last-child button { flex: 1; margin: 0; }
             .expand-hint { display: block; margin-left: 0; margin-top: 5px; }
+            .weekday-selector label { padding: 5px; font-size: 12px; min-width: 30px; }
         }
     </style>
 </head>
@@ -248,7 +254,7 @@
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('batch-modal')">&times;</span>
         <h3 style="margin-top:0;">批量增加時間</h3>
-        <p style="font-size: 13px; color: var(--dim-text); margin-top: 0;">為選取的日期範圍新增工作（如有舊紀錄將被覆蓋）</p>
+        <p style="font-size: 13px; color: var(--dim-text); margin-top: 0;">選擇日期範圍及適用星期（如有舊紀錄將被覆蓋）</p>
         
         <label>選擇工作:</label>
         <select id="batch-job"></select>
@@ -262,6 +268,18 @@
                 <label>結束日期:</label>
                 <input type="date" id="batch-end-date">
             </div>
+        </div>
+
+        <!-- 新增：選擇適用星期 -->
+        <label style="display:block; margin-top:5px;">適用星期 (可多選):</label>
+        <div class="weekday-selector">
+            <label><input type="checkbox" class="batch-weekday" value="1" checked> 一</label>
+            <label><input type="checkbox" class="batch-weekday" value="2" checked> 二</label>
+            <label><input type="checkbox" class="batch-weekday" value="3" checked> 三</label>
+            <label><input type="checkbox" class="batch-weekday" value="4" checked> 四</label>
+            <label><input type="checkbox" class="batch-weekday" value="5" checked> 五</label>
+            <label><input type="checkbox" class="batch-weekday" value="6" checked> 六</label>
+            <label><input type="checkbox" class="batch-weekday" value="0" checked> 日</label>
         </div>
         
         <div style="display:flex; gap:10px;">
@@ -455,7 +473,6 @@
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        // 取得今日實際日期做比對
         const realToday = new Date();
         const isCurrentMonthView = (year === realToday.getFullYear() && month === realToday.getMonth());
         
@@ -539,7 +556,7 @@
         }
     }
 
-    // --- 批量新增邏輯 ---
+    // --- 批量新增邏輯 (包含星期篩選) ---
     function openBatchModal() {
         if(appData.jobs.length === 0) return alert("請先新增工作。");
         document.getElementById('batch-modal').style.display = 'flex';
@@ -561,21 +578,37 @@
         
         if(curr > endD) return alert("開始日期不能晚於結束日期");
         
+        // 抓取勾選的星期 (轉成數字陣列：0=日, 1=一...6=六)
+        const selectedWeekdays = Array.from(document.querySelectorAll('.batch-weekday:checked')).map(cb => parseInt(cb.value));
+        
+        if(selectedWeekdays.length === 0) return alert("請至少選擇一天適用星期");
+        
+        let addedCount = 0;
+
         while(curr <= endD) {
-            const dStr = curr.toISOString().split('T')[0];
-            if(!appData.records[dStr]) appData.records[dStr] = [];
-            const idx = appData.records[dStr].findIndex(r => r.jobId === jobId);
-            const newRec = { jobId, start, end, allowance };
-            if(idx > -1) appData.records[dStr][idx] = newRec;
-            else appData.records[dStr].push(newRec);
-            
+            // 只在符合勾選星期的日子加入紀錄
+            if(selectedWeekdays.includes(curr.getDay())) {
+                const dStr = curr.toISOString().split('T')[0];
+                if(!appData.records[dStr]) appData.records[dStr] = [];
+                const idx = appData.records[dStr].findIndex(r => r.jobId === jobId);
+                const newRec = { jobId, start, end, allowance };
+                if(idx > -1) appData.records[dStr][idx] = newRec;
+                else appData.records[dStr].push(newRec);
+                
+                addedCount++;
+            }
             curr.setDate(curr.getDate() + 1);
         }
         
+        if(addedCount === 0) {
+            alert("你選擇的日期範圍內，沒有符合所選星期的日子。");
+            return;
+        }
+
         saveToLocal();
         closeModal('batch-modal');
         renderCalendar();
-        alert("批量新增完成！");
+        alert(`批量新增完成！共新增/更新了 ${addedCount} 天的工作紀錄。`);
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
