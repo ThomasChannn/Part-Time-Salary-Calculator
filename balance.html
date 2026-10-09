@@ -660,7 +660,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡總額度 (HKD Total Limit)</label>
-                    <input type="number" step="0.0001" x-model.number="creditForm.limit" @input="onLimitChange()" required placeholder="例如: 50000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                    <input type="number" step="0.0001" x-model.number="creditForm.limit" @input="onLimitChange()" required placeholder="例如: 10000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
                 </div>
 
                 <div class="p-3 bg-slate-900/80 border border-rose-900/40 rounded-xl space-y-3">
@@ -787,7 +787,7 @@
 
                 showCreditModal: false,
                 isEditCredit: false,
-                creditForm: { id: null, bankName: '', cardName: '', limit: 50000, spent: 0, remaining: 50000, dueDate: '' },
+                creditForm: { id: null, bankName: '', cardName: '', limit: 10000, spent: 0, remaining: 10000, dueDate: '' },
 
                 showTxModal: false,
                 txForm: { type: 'expense', targetCompositeKey: '', amount: '', category: '飲食外賣', date: new Date().toISOString().slice(0, 10), notes: '' },
@@ -1028,7 +1028,7 @@
                 },
 
                 updateExchangeRate() {
-                    const rates = { HKD: 1, USD: 7.8245, RMB: 1.0821, JPY: 0.05213, GBP: 10.124 };
+                    const rates = { HKD: 1, USD: 7.85, RMB: 1.17, JPY: 0.05, GBP: 10.124 };
                     this.bankForm.exchangeRate = rates[this.bankForm.currency] || 1;
                     this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate);
                 },
@@ -1053,7 +1053,7 @@
                 // 信用卡 Modal
                 openCreditModal() {
                     this.isEditCredit = false;
-                    this.creditForm = { id: Date.now(), bankName: '', cardName: '', limit: 50000, spent: 0, remaining: 50000, dueDate: '' };
+                    this.creditForm = { id: Date.now(), bankName: '', cardName: '', limit: 10000, spent: 0, remaining: 10000, dueDate: '' };
                     this.showCreditModal = true;
                 },
 
