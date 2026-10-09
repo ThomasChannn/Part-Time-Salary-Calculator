@@ -84,13 +84,13 @@
             
             <!-- 桌面端工具按鈕 -->
             <div class="hidden md:flex items-center space-x-2">
-                <!-- 位數精確度切換按鈕 (2dp / 個位數 / 全位) -->
+                <!-- 位數精確度切換按鈕 (2位小數 / 個位數 / 全位) -->
                 <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-xl p-1 space-x-1">
                     <span class="text-[11px] text-slate-400 px-2 font-medium"><i class="fa-solid fa-sliders text-indigo-400 mr-1"></i>顯示位數:</span>
                     <button @click="setGlobalPrecision('2dp')" 
                             :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
                             class="px-2.5 py-1 text-xs rounded-lg transition" title="四捨五入至2位小數 (例如 HK$12,850.46)">
-                        2位小數 (2dp)
+                        2位小數
                     </button>
                     <button @click="setGlobalPrecision('unit')" 
                             :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
@@ -132,7 +132,7 @@
         <div class="md:hidden flex items-center justify-between bg-slate-800 p-3 rounded-2xl border border-slate-700 text-xs">
             <span class="text-slate-400 font-medium">顯示位數:</span>
             <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-700">
-                <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">2位 (2dp)</button>
+                <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">2位小數</button>
                 <button @click="setGlobalPrecision('unit')" :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">個位數</button>
                 <button @click="setGlobalPrecision('full')" :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">完整小數</button>
             </div>
