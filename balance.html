@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>香港個人理財及卡債管理儀表板</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,11 +24,11 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Alpine.js -->
+    <!-- Alpine.js for lightweight state management -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Google Fonts Inter -->
+    <!-- Inter Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -78,34 +78,46 @@
                         香港個人理財管理
                         <span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">HKD ($)</span>
                     </h1>
-                    <p class="text-xs text-slate-400">存款、信用卡雙向卡債、精密小數點與收支追蹤</p>
+                    <p class="text-xs text-slate-400">存款、信用卡雙向卡債、小數精確度與收支追蹤</p>
                 </div>
             </div>
             
             <!-- 桌面端工具按鈕 -->
             <div class="hidden md:flex items-center space-x-2">
-                <!-- 全局小數點切換按鈕 -->
-                <button @click="toggleGlobalPrecision()" 
-                        :class="globalShowFullDecimals ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-slate-700 text-slate-300 hover:text-white border-slate-600'"
-                        class="px-3 py-1.5 text-xs font-semibold border rounded-lg transition flex items-center gap-1.5"
-                        title="點擊切換全局小數點精確度">
-                    <i class="fa-solid" :class="globalShowFullDecimals ? 'fa-square-check' : 'fa-list-ol'"></i>
-                    <span x-text="globalShowFullDecimals ? '已顯示高精度小數' : '切換全域完整小數'"></span>
-                </button>
-                <button @click="openTxModal()" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow transition flex items-center gap-1.5">
+                <!-- 位數精確度切換按鈕 (2dp / 個位數 / 全位) -->
+                <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-xl p-1 space-x-1">
+                    <span class="text-[11px] text-slate-400 px-2 font-medium"><i class="fa-solid fa-sliders text-indigo-400 mr-1"></i>顯示位數:</span>
+                    <button @click="setGlobalPrecision('2dp')" 
+                            :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                            class="px-2.5 py-1 text-xs rounded-lg transition" title="四捨五入至2位小數 (例如 HK$12,850.46)">
+                        2位小數 (2dp)
+                    </button>
+                    <button @click="setGlobalPrecision('unit')" 
+                            :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                            class="px-2.5 py-1 text-xs rounded-lg transition" title="取至個位數整數 (例如 HK$12,850)">
+                        整數個位
+                    </button>
+                    <button @click="setGlobalPrecision('full')" 
+                            :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                            class="px-2.5 py-1 text-xs rounded-lg transition" title="顯示完整高精度小數">
+                        完整小數
+                    </button>
+                </div>
+
+                <button @click="openTxModal()" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow transition flex items-center gap-1.5">
                     <i class="fa-solid fa-plus"></i>
                     <span>記一筆收支</span>
                 </button>
-                <button @click="exportData()" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition flex items-center gap-1.5">
+                <button @click="exportData()" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition flex items-center gap-1.5">
                     <i class="fa-solid fa-download"></i>
-                    <span>匯出</span>
+                    <span>備份</span>
                 </button>
-                <label class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                <label class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition cursor-pointer flex items-center gap-1.5">
                     <i class="fa-solid fa-upload"></i>
-                    <span>匯入</span>
+                    <span>還原</span>
                     <input type="file" accept=".json" @change="importData($event)" class="hidden">
                 </label>
-                <button @click="confirmReset()" class="px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-lg transition flex items-center gap-1.5">
+                <button @click="confirmReset()" class="px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-xl transition flex items-center gap-1.5">
                     <i class="fa-solid fa-rotate-left"></i>
                     <span>重置</span>
                 </button>
@@ -116,15 +128,14 @@
     <!-- 主要內容區域 (Main Content Area) -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
 
-        <!-- 全局工具欄 (手機版顯示) -->
-        <div class="md:hidden flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700 text-xs">
-            <span class="text-slate-400">金額顯示精確度：</span>
-            <button @click="toggleGlobalPrecision()" 
-                    :class="globalShowFullDecimals ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-slate-700 text-slate-300'"
-                    class="px-2.5 py-1 text-xs font-semibold border rounded-lg transition flex items-center gap-1">
-                <i class="fa-solid" :class="globalShowFullDecimals ? 'fa-square-check' : 'fa-list-ol'"></i>
-                <span x-text="globalShowFullDecimals ? '完整小數 (開啟)' : '標準2位小數'"></span>
-            </button>
+        <!-- 全局位數切換 (手機版顯示) -->
+        <div class="md:hidden flex items-center justify-between bg-slate-800 p-3 rounded-2xl border border-slate-700 text-xs">
+            <span class="text-slate-400 font-medium">顯示位數:</span>
+            <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-700">
+                <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">2位 (2dp)</button>
+                <button @click="setGlobalPrecision('unit')" :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">個位數</button>
+                <button @click="setGlobalPrecision('full')" :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">完整小數</button>
+            </div>
         </div>
 
         <!-- Tab 1: 總覽儀表板 (Dashboard Tab) -->
@@ -139,7 +150,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">淨資產 Net Worth</span>
-                            <span class="text-[10px] text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">點擊數字顯小數</span>
+                            <span class="text-[10px] text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">點擊切換精確度</span>
                         </div>
                         <div class="text-2xl sm:text-3xl font-extrabold money-click" 
                              :class="netWorth >= 0 ? 'text-white' : 'text-rose-400'"
@@ -165,7 +176,7 @@
                         </div>
                         <div class="text-2xl font-bold text-emerald-400 money-click" 
                              @click="toggleItemPrecision('totalBank')"
-                             title="點擊切換完整小數點">
+                             title="點擊切換小數點">
                             HK$ <span x-text="formatMoney(totalBankBalance, 'totalBank')">0</span>
                         </div>
                     </div>
@@ -186,7 +197,7 @@
                         </div>
                         <div class="text-2xl font-bold text-rose-400 money-click" 
                              @click="toggleItemPrecision('totalCredit')"
-                             title="點擊切換完整小數點">
+                             title="點擊切換小數點">
                             HK$ <span x-text="formatMoney(totalCreditSpent, 'totalCredit')">0</span>
                         </div>
                     </div>
@@ -212,7 +223,7 @@
                             <span class="text-xs text-slate-400">總額度: 
                                 <strong class="text-slate-200 money-click" 
                                         @click="toggleItemPrecision('totalLimit')" 
-                                        title="點擊切換完整小數點">
+                                        title="點擊切換小數點">
                                     HK$ <span x-text="formatMoney(totalCreditLimit, 'totalLimit')">0</span>
                                 </strong>
                             </span>
@@ -230,7 +241,6 @@
 
             <!-- 圖表分析區塊 (Charts Grid) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- 淨資產結構餅圖 -->
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -244,13 +254,12 @@
                         可用總信用額度：
                         <strong class="text-amber-300 money-click" 
                                 @click="toggleItemPrecision('totalRemaining')" 
-                                title="點擊切換完整小數點">
+                                title="點擊切換小數點">
                             HK$ <span x-text="formatMoney(totalCreditRemaining, 'totalRemaining')">0</span>
                         </strong>
                     </div>
                 </div>
 
-                <!-- 帳戶與信用卡金額分佈 -->
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -290,7 +299,7 @@
                             <div class="text-right font-bold text-sm money-click" 
                                  :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'"
                                  @click="toggleItemPrecision('tx_' + tx.id)"
-                                 title="點擊切換完整小數點">
+                                 title="點擊切換小數點">
                                 <span x-text="tx.type === 'income' ? '+' : '-'"></span>
                                 HK$ <span x-text="formatMoney(tx.amount, 'tx_' + tx.id)"></span>
                             </div>
@@ -324,7 +333,7 @@
                             <div class="flex items-start justify-between mb-3">
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 rounded-xl bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center font-bold text-sm">
-                                        <span x-text="acc.bankName.substring(0,2)"></span>
+                                        <span x-text="acc.bankName ? acc.bankName.substring(0,2) : '銀'"></span>
                                     </div>
                                     <div>
                                         <h3 class="font-bold text-slate-100 text-sm" x-text="acc.bankName"></h3>
@@ -347,14 +356,14 @@
                                 </div>
                                 <div class="text-xl font-bold text-emerald-400 mt-0.5 money-click" 
                                      @click="toggleItemPrecision('bank_hkd_' + acc.id)"
-                                     title="點擊切換完整小數點">
+                                     title="點擊切換小數點">
                                     HK$ <span x-text="formatMoney(acc.balance, 'bank_hkd_' + acc.id)"></span>
                                 </div>
                                 <div x-show="acc.currency !== 'HKD'" class="text-[10px] text-slate-400 mt-1">
                                     原幣: <span x-text="acc.currency"></span> 
                                     <span class="money-click text-slate-300 font-medium" 
                                           @click="toggleItemPrecision('bank_raw_' + acc.id)"
-                                          title="點擊切換原幣完整小數"
+                                          title="點擊切換小數點"
                                           x-text="formatMoney(acc.rawBalance, 'bank_raw_' + acc.id)"></span> 
                                     (匯率: <span x-text="acc.exchangeRate"></span>)
                                 </div>
@@ -374,7 +383,7 @@
             </div>
         </div>
 
-        <!-- Tab 3: 信用卡與雙向額度算算 (Credit Cards Tab) -->
+        <!-- Tab 3: 信用卡與雙向額度對算 (Credit Cards Tab) -->
         <div x-show="activeTab === 'credits'" x-cloak class="space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
                 <div>
@@ -417,13 +426,12 @@
                                 </div>
                             </div>
 
-                            <!-- 雙向額度數據展現 -->
                             <div class="grid grid-cols-2 gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 mb-3">
                                 <div>
-                                    <span class="text-[10px] text-slate-400 block mb-0.5">已刷欠款 (Expense)</span>
+                                    <span class="text-[10px] text-slate-400 block mb-0.5">已刷欠款 (Spent)</span>
                                     <span class="text-base font-bold text-rose-400 money-click"
                                           @click="toggleItemPrecision('card_spent_' + card.id)"
-                                          title="點擊切換完整小數點">
+                                          title="點擊切換小數點">
                                         HK$ <span x-text="formatMoney(card.spent, 'card_spent_' + card.id)"></span>
                                     </span>
                                 </div>
@@ -431,7 +439,7 @@
                                     <span class="text-[10px] text-slate-400 block mb-0.5">剩餘可用 (Available)</span>
                                     <span class="text-base font-bold text-emerald-400 money-click"
                                           @click="toggleItemPrecision('card_rem_' + card.id)"
-                                          title="點擊切換完整小數點">
+                                          title="點擊切換小數點">
                                         HK$ <span x-text="formatMoney(card.remaining, 'card_rem_' + card.id)"></span>
                                     </span>
                                 </div>
@@ -443,7 +451,7 @@
                                 <span>總額度: 
                                     <strong class="text-slate-200 font-medium money-click"
                                             @click="toggleItemPrecision('card_limit_' + card.id)"
-                                            title="點擊切換完整小數點">
+                                            title="點擊切換小數點">
                                         HK$ <span x-text="formatMoney(card.limit, 'card_limit_' + card.id)"></span>
                                     </strong>
                                 </span>
@@ -512,7 +520,7 @@
                                     <td class="py-3.5 px-4 text-right font-bold whitespace-nowrap money-click" 
                                         :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'"
                                         @click="toggleItemPrecision('tx_tab_' + tx.id)"
-                                        title="點擊切換完整小數點">
+                                        title="點擊切換小數點">
                                         <span x-text="tx.type === 'income' ? '+' : '-'"></span>
                                         HK$ <span x-text="formatMoney(tx.amount, 'tx_tab_' + tx.id)"></span>
                                     </td>
@@ -558,7 +566,7 @@
         </div>
     </nav>
 
-    <!-- 銀行帳戶 Modal (Bank Modal) -->
+    <!-- 銀行帳戶 Modal -->
     <div x-cloak x-show="showBankModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.outside="showBankModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
@@ -605,7 +613,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">目前存款餘額 (原幣高精度)</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">目前存款餘額 (原幣)</label>
                     <input type="number" step="0.00000001" x-model.number="bankForm.rawBalance" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
                 </div>
 
@@ -622,7 +630,7 @@
         </div>
     </div>
 
-    <!-- 信用卡 Modal (Credit Card Modal with Dual Calculation) -->
+    <!-- 信用卡 Modal -->
     <div x-cloak x-show="showCreditModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.outside="showCreditModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
@@ -650,13 +658,11 @@
                     <input type="text" x-model="creditForm.cardName" placeholder="例如: HSBC Red 卡, EveryMile" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
                 </div>
 
-                <!-- 總額度設定 -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡總額度 (HKD Total Limit)</label>
                     <input type="number" step="0.0001" x-model.number="creditForm.limit" @input="onLimitChange()" required placeholder="例如: 50000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
                 </div>
 
-                <!-- 雙向輸入區域 (Spent vs Remaining) -->
                 <div class="p-3 bg-slate-900/80 border border-rose-900/40 rounded-xl space-y-3">
                     <div class="text-[11px] font-semibold text-rose-300 flex items-center justify-between">
                         <span><i class="fa-solid fa-calculator"></i> 額度雙向自動對算</span>
@@ -688,7 +694,7 @@
         </div>
     </div>
 
-    <!-- 收支紀錄 Modal (Transaction Modal) -->
+    <!-- 收支紀錄 Modal -->
     <div x-cloak x-show="showTxModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.outside="showTxModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
@@ -724,7 +730,7 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">金額 (HKD 高精度)</label>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">金額 (HKD)</label>
                         <input type="number" step="0.00000001" min="0.00000001" x-model.number="txForm.amount" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100 font-bold">
                     </div>
                     <div>
@@ -770,9 +776,9 @@
                 creditCards: [],
                 transactions: [],
 
-                // 全局與個別小數點顯示控制
-                globalShowFullDecimals: false,
-                itemPrecisions: {}, // 存儲個別金額 id -> boolean (true: show full decimals)
+                // 靈活位數顯示模式: '2dp' (2位小數), 'unit' (個位數/整數), 'full' (完整高精度)
+                precisionMode: '2dp',
+                itemPrecisions: {}, // 個別點擊切換狀態
 
                 // Modals
                 showBankModal: false,
@@ -815,11 +821,81 @@
                     this.$watch('bankAccounts', () => { this.saveData(); this.updateCharts(); }, { deep: true });
                     this.$watch('creditCards', () => { this.saveData(); this.updateCharts(); }, { deep: true });
                     this.$watch('transactions', () => { this.saveData(); this.updateCharts(); }, { deep: true });
+                    this.$watch('precisionMode', () => { this.saveData(); });
                 },
 
-                // 金額點擊與小數點格式化核心 (Click to Toggle Decimals Logic)
-                toggleGlobalPrecision() {
-                    this.globalShowFullDecimals = !this.globalShowFullDecimals;
+                // 數據自動升級與跨 LocalStorage Key 相容拯救處理
+                loadStoredData() {
+                    const PRIMARY_KEY = 'hk_finance_tracker_v3';
+                    
+                    // 所有歷史與跨版本的 LocalStorage Key 清單（確保絕不丟失資料）
+                    const HISTORICAL_KEYS = [
+                        'hk_finance_tracker_v3',
+                        'hk_finance_tracker_data_v1',
+                        'hk_finance_data_v2',
+                        'hk_finance_app_v2',
+                        'hk_finance_app_v1',
+                        'hk_finance_data'
+                    ];
+
+                    let foundData = null;
+
+                    for (const key of HISTORICAL_KEYS) {
+                        const raw = localStorage.getItem(key);
+                        if (raw) {
+                            try {
+                                const parsed = JSON.parse(raw);
+                                if (parsed && (
+                                    (parsed.bankAccounts && parsed.bankAccounts.length > 0) || 
+                                    (parsed.creditCards && parsed.creditCards.length > 0) || 
+                                    (parsed.transactions && parsed.transactions.length > 0)
+                                )) {
+                                    foundData = parsed;
+                                    break;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing localStorage key:', key, e);
+                            }
+                        }
+                    }
+
+                    if (foundData) {
+                        this.bankAccounts = foundData.bankAccounts || [];
+                        this.creditCards = foundData.creditCards || [];
+                        this.transactions = foundData.transactions || [];
+                        this.precisionMode = foundData.precisionMode || '2dp';
+                        this.saveData(); // 無縫重寫至標準 Primary Key
+                    } else {
+                        // 僅在無任何歷史 LocalStorage 紀錄時加載預設範例
+                        this.loadDefaultData();
+                    }
+                },
+
+                loadDefaultData() {
+                    this.bankAccounts = JSON.parse(JSON.stringify(this.defaultData.bankAccounts));
+                    this.creditCards = JSON.parse(JSON.stringify(this.defaultData.creditCards));
+                    this.transactions = JSON.parse(JSON.stringify(this.defaultData.transactions));
+                    this.precisionMode = '2dp';
+                    this.saveData();
+                },
+
+                saveData() {
+                    const dataObj = {
+                        bankAccounts: this.bankAccounts,
+                        creditCards: this.creditCards,
+                        transactions: this.transactions,
+                        precisionMode: this.precisionMode
+                    };
+                    
+                    const PRIMARY_KEY = 'hk_finance_tracker_v3';
+                    localStorage.setItem(PRIMARY_KEY, JSON.stringify(dataObj));
+                    localStorage.setItem('hk_finance_tracker_data_v1', JSON.stringify(dataObj));
+                    localStorage.setItem('hk_finance_data_v2', JSON.stringify(dataObj));
+                },
+
+                // 數值格式化: 2位小數 (2dp) / 個位數 (unit) / 完整小數 (full)
+                setGlobalPrecision(mode) {
+                    this.precisionMode = mode;
                 },
 
                 toggleItemPrecision(key) {
@@ -828,24 +904,21 @@
                 },
 
                 formatMoney(val, key = null) {
-                    if (val === undefined || val === null || isNaN(val)) return '0.00';
+                    if (val === undefined || val === null || isNaN(val)) return '0';
                     const num = Number(val);
 
-                    // 檢查是否需顯示高精度小數 (全域開啟 OR 個別點擊開啟)
-                    const isFullPrecision = this.globalShowFullDecimals || (key && !!this.itemPrecisions[key]);
+                    // 若用戶點擊該單一金額，優先顯示完整小數點
+                    const isItemOverridden = key && !!this.itemPrecisions[key];
 
-                    if (isFullPrecision) {
-                        // 完整小數顯示模式 (保留原數值高精細度，最高顯示 8 位小數)
-                        const strVal = num.toString();
-                        const parts = strVal.split('.');
+                    if (isItemOverridden || this.precisionMode === 'full') {
+                        const parts = num.toString().split('.');
                         const intPart = Number(parts[0]).toLocaleString('en-US');
-                        if (parts.length > 1) {
-                            return intPart + '.' + parts[1].substring(0, 8);
-                        } else {
-                            return intPart + '.00';
-                        }
+                        return parts.length > 1 ? `${intPart}.${parts[1].substring(0, 8)}` : `${intPart}.00`;
+                    } else if (this.precisionMode === 'unit') {
+                        // 取至整數個位數 (Unit Digits)
+                        return Math.round(num).toLocaleString('en-US');
                     } else {
-                        // 標準 2 位小數顯示模式
+                        // 預設 2 位小數 (2dp)
                         return num.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
@@ -853,7 +926,7 @@
                     }
                 },
 
-                // 計算屬性 (高精度加總)
+                // 計算屬性
                 get totalBankBalance() {
                     return this.bankAccounts.reduce((sum, a) => sum + Number(a.balance || 0), 0);
                 },
@@ -879,40 +952,8 @@
                     return (this.totalCreditSpent / this.totalCreditLimit) * 100;
                 },
 
-                // 資料持久化
-                loadStoredData() {
-                    const saved = localStorage.getItem('hk_finance_data_v2');
-                    if (saved) {
-                        try {
-                            const parsed = JSON.parse(saved);
-                            this.bankAccounts = parsed.bankAccounts || [];
-                            this.creditCards = parsed.creditCards || [];
-                            this.transactions = parsed.transactions || [];
-                        } catch (e) {
-                            this.loadDefaultData();
-                        }
-                    } else {
-                        this.loadDefaultData();
-                    }
-                },
-
-                loadDefaultData() {
-                    this.bankAccounts = JSON.parse(JSON.stringify(this.defaultData.bankAccounts));
-                    this.creditCards = JSON.parse(JSON.stringify(this.defaultData.creditCards));
-                    this.transactions = JSON.parse(JSON.stringify(this.defaultData.transactions));
-                    this.saveData();
-                },
-
-                saveData() {
-                    localStorage.setItem('hk_finance_data_v2', JSON.stringify({
-                        bankAccounts: this.bankAccounts,
-                        creditCards: this.creditCards,
-                        transactions: this.transactions
-                    }));
-                },
-
                 confirmReset() {
-                    if (confirm('確定要將所有數據重置為預設香港範例資料嗎？')) {
+                    if (confirm('確定要將所有數據重置為預設香港範例資料嗎？此動作無法撤銷。')) {
                         this.loadDefaultData();
                     }
                 },
@@ -921,11 +962,12 @@
                     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
                         bankAccounts: this.bankAccounts,
                         creditCards: this.creditCards,
-                        transactions: this.transactions
+                        transactions: this.transactions,
+                        precisionMode: this.precisionMode
                     }, null, 2));
                     const a = document.createElement('a');
                     a.setAttribute("href", dataStr);
-                    a.setAttribute("download", `HK_Finance_Data_${new Date().toISOString().slice(0, 10)}.json`);
+                    a.setAttribute("download", `HK_Finance_Backup_${new Date().toISOString().slice(0, 10)}.json`);
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -942,20 +984,22 @@
                                 this.bankAccounts = imported.bankAccounts;
                                 this.creditCards = imported.creditCards;
                                 this.transactions = imported.transactions || [];
-                                alert('成功匯入資料！');
+                                if (imported.precisionMode) this.precisionMode = imported.precisionMode;
+                                this.saveData();
+                                alert('成功還原備份資料！');
                             }
                         } catch (err) {
-                            alert('無法讀取 JSON 檔案。');
+                            alert('無法讀取備份 JSON 檔案。');
                         }
                     };
                     reader.readAsText(file);
                 },
 
-                // 雙向信用卡額度計算
+                // 雙向信用卡額度推算
                 onLimitChange() {
                     const limit = Number(this.creditForm.limit) || 0;
                     const spent = Number(this.creditForm.spent) || 0;
-                    this.creditForm.remaining = Math.max(0, limit - spent);
+                    this.creditForm.remaining = limit - spent;
                 },
 
                 onSpentChange() {
@@ -970,7 +1014,7 @@
                     this.creditForm.spent = limit - remaining;
                 },
 
-                // 銀行戶口 Modal
+                // 銀行帳戶 Modal
                 openBankModal() {
                     this.isEditBank = false;
                     this.bankForm = { id: Date.now(), bankName: '', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '' };
@@ -1039,7 +1083,7 @@
                     }
                 },
 
-                // 交易記賬 (Auto recalculates exact balances)
+                // 交易記賬
                 openTxModal(preType = null, preId = null) {
                     let defaultKey = '';
                     if (preType === 'bank' && preId) {
