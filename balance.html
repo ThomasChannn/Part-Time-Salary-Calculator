@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-HK" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>香港個人理財及卡債管理儀表板</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        cardBg: '#1e293b',
+                        borderBg: '#334155',
+                        accentEmerald: '#10b981',
+                        accentRose: '#f43f5e',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        [x-cloak] { display: none !important; }
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 pb-24 lg:pb-8" x-data="hkFinanceApp()" x-init="initApp()">
+
+    <!-- 頂部導航欄 (Top Header) -->
+    <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/80 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-vault text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-white leading-tight flex items-center gap-2">
+                        香港個人理財管理
+                        <span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">HKD ($)</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">存款、信用卡雙向卡債與收支追蹤</p>
+                </div>
+            </div>
+            
+            <!-- 桌面端工具按鈕 -->
+            <div class="hidden md:flex items-center space-x-2">
+                <button @click="openTxModal()" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>記一筆收支</span>
+                </button>
+                <button @click="exportData()" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i>
+                    <span>匯出</span>
+                </button>
+                <label class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>匯入</span>
+                    <input type="file" accept=".json" @change="importData($event)" class="hidden">
+                </label>
+                <button @click="confirmReset()" class="px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>重置</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區域 (Main Content Area) -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- Tab 1: 總覽儀表板 (Dashboard Tab) -->
+        <div x-show="activeTab === 'dashboard'" x-cloak class="space-y-6">
+            <!-- 核心指標卡片 (Summary Cards Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- 淨資產 -->
+                <div class="bg-gradient-to-br from-indigo-900/90 to-slate-800 border border-indigo-700/50 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-7xl text-indigo-200">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider block mb-1">淨資產 Net Worth</span>
+                        <div class="text-2xl sm:text-3xl font-extrabold" :class="netWorth >= 0 ? 'text-white' : 'text-rose-400'">
+                            HK$ <span x-text="formatNumber(netWorth)">0</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-indigo-800/60 text-xs text-indigo-200 flex justify-between items-center">
+                        <span>存款總額扣除信用卡債務</span>
+                        <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+                    </div>
+                </div>
+
+                <!-- 銀行存款總額 -->
+                <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
+                            <span>銀行總存款</span>
+                            <div class="w-7 h-7 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center">
+                                <i class="fa-solid fa-building-columns text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-emerald-400">
+                            HK$ <span x-text="formatNumber(totalBankBalance)">0</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                        <span>帳戶數量：<strong class="text-slate-200" x-text="bankAccounts.length">0</strong> 個</span>
+                        <span class="text-emerald-400 font-medium"><i class="fa-solid fa-arrow-up text-[10px]"></i> 資產</span>
+                    </div>
+                </div>
+
+                <!-- 信用卡總欠款 -->
+                <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
+                            <span>信用卡總欠款 (已用額度)</span>
+                            <div class="w-7 h-7 rounded-lg bg-rose-950/80 text-rose-400 border border-rose-800/50 flex items-center justify-center">
+                                <i class="fa-solid fa-credit-card text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-rose-400">
+                            HK$ <span x-text="formatNumber(totalCreditSpent)">0</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                        <span>持卡數量：<strong class="text-slate-200" x-text="creditCards.length">0</strong> 張</span>
+                        <span class="text-rose-400 font-medium"><i class="fa-solid fa-arrow-down text-[10px]"></i> 負債</span>
+                    </div>
+                </div>
+
+                <!-- 額度使用率 -->
+                <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
+                            <span>信用額度使用率</span>
+                            <div class="w-7 h-7 rounded-lg bg-amber-950/80 text-amber-400 border border-amber-800/50 flex items-center justify-center">
+                                <i class="fa-solid fa-percent text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <div class="text-2xl font-bold text-white">
+                                <span x-text="creditUtilizationRate.toFixed(1)">0</span>%
+                            </div>
+                            <span class="text-xs text-slate-400">總額度 HK$ <span x-text="formatNumber(totalCreditLimit)">0</span></span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60">
+                        <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 rounded-full transition-all duration-500" 
+                                 :class="creditUtilizationRate > 50 ? 'bg-rose-500' : (creditUtilizationRate > 30 ? 'bg-amber-400' : 'bg-emerald-400')"
+                                 :style="`width: ${Math.min(creditUtilizationRate, 100)}%`"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表分析區塊 (Charts Grid) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 淨資產結構餅圖 -->
+                <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-indigo-400"></i> 資產與欠款佔比
+                        </h2>
+                    </div>
+                    <div class="relative h-56 flex items-center justify-center">
+                        <canvas id="assetDebtChart"></canvas>
+                    </div>
+                    <div class="text-center text-xs text-slate-400 mt-3">
+                        可用信用額度：<strong class="text-amber-300">HK$ <span x-text="formatNumber(totalCreditRemaining)">0</span></strong>
+                    </div>
+                </div>
+
+                <!-- 帳戶與信用卡金額分佈 -->
+                <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-indigo-400"></i> 各機構餘額與刷卡欠款
+                        </h2>
+                    </div>
+                    <div class="relative h-56">
+                        <canvas id="accountsBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近收支動態 (Recent Transactions Quick List) -->
+            <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> 最近 5 筆收支動態
+                    </h2>
+                    <button @click="activeTab = 'transactions'" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">查看完整交易紀錄 &rarr;</button>
+                </div>
+                <div class="space-y-2.5">
+                    <template x-for="tx in transactions.slice(0, 5)" :key="tx.id">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-700/50">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                                     :class="tx.type === 'income' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50' : 'bg-rose-950/80 text-rose-400 border border-rose-800/50'">
+                                    <i :class="getCategoryIcon(tx.category)"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-slate-200" x-text="tx.targetName"></div>
+                                    <div class="text-[11px] text-slate-400">
+                                        <span x-text="tx.date"></span> · <span x-text="tx.category"></span>
+                                        <span x-show="tx.notes" x-text="' (' + tx.notes + ')'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'">
+                                <span x-text="tx.type === 'income' ? '+' : '-'"></span>
+                                HK$ <span x-text="formatNumber(tx.amount)"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="transactions.length === 0" class="py-6 text-center text-xs text-slate-500">
+                        尚無任何交易紀錄，點擊右上角「記一筆收支」開始紀錄。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 銀行帳戶 (Bank Accounts Tab) -->
+        <div x-show="activeTab === 'accounts'" x-cloak class="space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
+                <div>
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-building-columns text-emerald-400"></i> 銀行存款帳戶列表
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">管理香港本地及外幣存款戶，紀錄活期、定期與數位銀行資產</p>
+                </div>
+                <button @click="openBankModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> 新增銀行帳戶
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="acc in bankAccounts" :key="acc.id">
+                    <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-5 shadow-sm relative flex flex-col justify-between hover:border-slate-600 transition">
+                        <div>
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center font-bold text-sm">
+                                        <span x-text="acc.bankName.substring(0,2)"></span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-100 text-sm" x-text="acc.bankName"></h3>
+                                        <span class="text-xs text-slate-400" x-text="acc.accountName"></span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <button @click="editBankModal(acc)" class="p-1.5 text-slate-400 hover:text-amber-300 rounded-lg transition text-xs">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button @click="deleteBankAccount(acc.id)" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition text-xs">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 my-2">
+                                <div class="text-[11px] text-slate-400">目前餘額</div>
+                                <div class="text-xl font-bold text-emerald-400 mt-0.5">
+                                    HK$ <span x-text="formatNumber(acc.balance)"></span>
+                                </div>
+                                <div x-show="acc.currency !== 'HKD'" class="text-[10px] text-slate-400 mt-1">
+                                    原幣: <span x-text="acc.currency"></span> <span x-text="formatNumber(acc.rawBalance)"></span> (匯率: <span x-text="acc.exchangeRate"></span>)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between text-xs pt-3 border-t border-slate-700/50">
+                            <span class="text-slate-400" x-text="acc.notes || '無備註'"></span>
+                            <button @click="openTxModal('bank', acc.id)" class="text-indigo-400 hover:text-indigo-300 font-medium text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-plus-minus text-[10px]"></i> 記收支
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="bankAccounts.length === 0" class="col-span-full py-12 text-center text-slate-500 bg-slate-800/40 rounded-2xl border border-dashed border-slate-700">
+                    尚無銀行帳戶，點擊右上角新增。
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 信用卡與雙向額度計算 (Credit Cards Tab) -->
+        <div x-show="activeTab === 'credits'" x-cloak class="space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
+                <div>
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-credit-card text-rose-400"></i> 信用卡與卡債管理 (雙向額度算算)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">輸入「總額度」及「已用欠款」或「剩餘可用額度」，系統自動雙向推算！</p>
+                </div>
+                <button @click="openCreditModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> 新增信用卡
+                </button>
+            </div>
+
+            <!-- 卡片列表 Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <template x-for="card in creditCards" :key="card.id">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-lg relative flex flex-col justify-between group">
+                        <div>
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <span class="text-xs font-semibold text-indigo-400" x-text="card.bankName"></span>
+                                    <h3 class="font-bold text-slate-100 text-base" x-text="card.cardName"></h3>
+                                </div>
+                                <div class="flex items-center space-x-1 bg-slate-800/90 rounded-lg p-1 border border-slate-700">
+                                    <button @click="editCreditModal(card)" class="p-1 text-slate-400 hover:text-amber-300 text-xs">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button @click="deleteCreditCard(card.id)" class="p-1 text-slate-400 hover:text-rose-400 text-xs">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-8 h-6 rounded bg-amber-400/80 flex items-center justify-center text-slate-900 text-xs font-bold">
+                                    <i class="fa-solid fa-microchip"></i>
+                                </div>
+                                <div class="text-[11px] text-slate-400">
+                                    截單/繳款日: <span class="text-amber-300 font-semibold" x-text="card.dueDate ? '每月 ' + card.dueDate + ' 日' : '未設定'"></span>
+                                </div>
+                            </div>
+
+                            <!-- 雙向額度數據展現 -->
+                            <div class="grid grid-cols-2 gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 mb-3">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">已刷欠款 (Expense)</span>
+                                    <span class="text-base font-bold text-rose-400">HK$ <span x-text="formatNumber(card.spent)"></span></span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">剩餘可用 (Available)</span>
+                                    <span class="text-base font-bold text-emerald-400">HK$ <span x-text="formatNumber(card.remaining)"></span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-slate-700/60">
+                            <div class="flex justify-between items-center text-xs text-slate-400">
+                                <span>總額度: HK$ <span class="text-slate-200 font-medium" x-text="formatNumber(card.limit)"></span></span>
+                                <span class="font-semibold" :class="(card.spent / card.limit) > 0.8 ? 'text-rose-400' : 'text-slate-300'" x-text="((card.spent / (card.limit || 1)) * 100).toFixed(1) + '% 已用'"></span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                                <div class="h-1.5 rounded-full transition-all duration-300"
+                                     :class="(card.spent / card.limit) > 0.8 ? 'bg-rose-500' : ((card.spent / card.limit) > 0.5 ? 'bg-amber-400' : 'bg-emerald-400')"
+                                     :style="`width: ${Math.min((card.spent / (card.limit || 1)) * 100, 100)}%`"></div>
+                            </div>
+                            <div class="pt-2 flex justify-end">
+                                <button @click="openTxModal('credit', card.id)" class="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1">
+                                    <i class="fa-solid fa-plus-minus text-[10px]"></i> 刷卡/還款紀錄
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="creditCards.length === 0" class="col-span-full py-12 text-center text-slate-500 bg-slate-800/40 rounded-2xl border border-dashed border-slate-700">
+                    尚無信用卡資料，點擊右上角新增。
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: 明細紀錄 (Transactions Log Tab) -->
+        <div x-show="activeTab === 'transactions'" x-cloak class="space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
+                <div>
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i> 收支交易明細紀錄
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">每一筆收入與支出都會即時同步更新對應銀行餘額或信用卡欠款</p>
+                </div>
+                <button @click="openTxModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> 新增一筆紀錄
+                </button>
+            </div>
+
+            <!-- 交易列表 (Transactions Table / Card List) -->
+            <div class="bg-slate-800 border border-slate-700/80 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/80 text-slate-400 text-xs font-semibold uppercase border-b border-slate-700">
+                                <th class="py-3.5 px-4">日期</th>
+                                <th class="py-3.5 px-4">帳戶 / 信用卡</th>
+                                <th class="py-3.5 px-4">類別</th>
+                                <th class="py-3.5 px-4">備註</th>
+                                <th class="py-3.5 px-4 text-right">金額 (HKD)</th>
+                                <th class="py-3.5 px-4 text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/60 text-sm">
+                            <template x-for="tx in transactions" :key="tx.id">
+                                <tr class="hover:bg-slate-700/30 transition">
+                                    <td class="py-3.5 px-4 text-xs text-slate-300 whitespace-nowrap" x-text="tx.date"></td>
+                                    <td class="py-3.5 px-4 font-medium text-slate-100 whitespace-nowrap flex items-center gap-2">
+                                        <i :class="tx.targetType === 'bank' ? 'fa-solid fa-building-columns text-emerald-400' : 'fa-solid fa-credit-card text-rose-400'"></i>
+                                        <span x-text="tx.targetName"></span>
+                                    </td>
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-200" x-text="tx.category"></span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-slate-400 text-xs" x-text="tx.notes || '-'"></td>
+                                    <td class="py-3.5 px-4 text-right font-bold whitespace-nowrap" :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'">
+                                        <span x-text="tx.type === 'income' ? '+' : '-'"></span>
+                                        HK$ <span x-text="formatNumber(tx.amount)"></span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <button @click="deleteTransaction(tx.id)" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition text-xs">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr x-show="transactions.length === 0">
+                                <td colspan="6" class="py-10 text-center text-slate-500 text-xs">
+                                    尚無交易紀錄，點擊右上角新增。
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 手機版底部導航欄 (Mobile Bottom Nav Bar) -->
+    <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-slate-800/95 backdrop-blur-lg border-t border-slate-700 z-40 px-2 py-2">
+        <div class="grid grid-cols-4 gap-1 text-center">
+            <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'text-indigo-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
+                <i class="fa-solid fa-chart-line text-lg mb-1"></i>
+                <span class="text-[10px]">概覽</span>
+            </button>
+            <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-emerald-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
+                <i class="fa-solid fa-building-columns text-lg mb-1"></i>
+                <span class="text-[10px]">銀行帳戶</span>
+            </button>
+            <button @click="activeTab = 'credits'" :class="activeTab === 'credits' ? 'text-rose-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
+                <i class="fa-solid fa-credit-card text-lg mb-1"></i>
+                <span class="text-[10px]">信用卡</span>
+            </button>
+            <button @click="activeTab = 'transactions'" :class="activeTab === 'transactions' ? 'text-amber-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
+                <i class="fa-solid fa-list-check text-lg mb-1"></i>
+                <span class="text-[10px]">收支紀錄</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 手機版懸浮 Quick Add 按鈕 (Mobile Floating Action Button) -->
+    <div class="lg:hidden fixed bottom-16 right-4 z-40">
+        <button @click="openTxModal()" class="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 text-xl focus:outline-none">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- 銀行帳戶 Modal (Bank Modal) -->
+    <div x-cloak x-show="showBankModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.outside="showBankModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="text-base font-bold" x-text="isEditBank ? '編輯銀行帳戶' : '新增銀行帳戶'"></h3>
+                <button @click="showBankModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form @submit.prevent="saveBankAccount()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">銀行機構</label>
+                    <input type="text" list="hkBankList" x-model="bankForm.bankName" placeholder="例如: HSBC 匯豐, Hang Seng 恒生, Mox" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                    <datalist id="hkBankList">
+                        <option value="HSBC 匯豐銀行"></option>
+                        <option value="Hang Seng 恒生銀行"></option>
+                        <option value="Bank of China 中國銀行(香港)"></option>
+                        <option value="Standard Chartered 渣打銀行"></option>
+                        <option value="Mox Bank"></option>
+                        <option value="ZA Bank 眾安銀行"></option>
+                        <option value="Livi Bank"></option>
+                        <option value="Citi 花旗銀行"></option>
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">帳戶名稱 / 類別</label>
+                    <input type="text" x-model="bankForm.accountName" placeholder="例如: 港幣儲蓄戶口、外幣理財戶" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">幣別</label>
+                        <select x-model="bankForm.currency" @change="updateExchangeRate()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                            <option value="HKD">HKD (港幣)</option>
+                            <option value="USD">USD (美元)</option>
+                            <option value="RMB">RMB (人民幣)</option>
+                            <option value="JPY">JPY (日圓)</option>
+                            <option value="GBP">GBP (英鎊)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">對 HKD 匯率</label>
+                        <input type="number" step="0.0001" x-model.number="bankForm.exchangeRate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">目前存款餘額 (原幣)</label>
+                    <input type="number" step="0.01" x-model.number="bankForm.rawBalance" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">備註說明</label>
+                    <input type="text" x-model="bankForm.notes" placeholder="例如: 主要出糧戶口" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
+                    <button type="button" @click="showBankModal = false" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 rounded-xl transition">取消</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition" x-text="isEditBank ? '儲存變更' : '確認新增'"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 信用卡 Modal (Credit Card Modal with Dual Calculation) -->
+    <div x-cloak x-show="showCreditModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.outside="showCreditModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="text-base font-bold" x-text="isEditCredit ? '編輯信用卡與額度' : '新增信用卡與額度'"></h3>
+                <button @click="showCreditModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form @submit.prevent="saveCreditCard()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">發卡機構</label>
+                    <input type="text" list="hkCreditBankList" x-model="creditForm.bankName" placeholder="例如: HSBC 匯豐, 安信, 花旗" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                    <datalist id="hkCreditBankList">
+                        <option value="HSBC 匯豐"></option>
+                        <option value="Hang Seng 恒生"></option>
+                        <option value="Citi 花旗"></option>
+                        <option value="安信 EarnMORE"></option>
+                        <option value="Standard Chartered 渣打"></option>
+                        <option value="Mox Credit"></option>
+                        <option value="中銀香港"></option>
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡名稱</label>
+                    <input type="text" x-model="creditForm.cardName" placeholder="例如: HSBC Red 卡, EveryMile" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                </div>
+
+                <!-- 總額度設定 -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡總額度 (HKD Total Limit)</label>
+                    <input type="number" step="100" x-model.number="creditForm.limit" @input="onLimitChange()" required placeholder="例如: 50000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                </div>
+
+                <!-- 雙向輸入區域 (Spent vs Remaining) -->
+                <div class="p-3 bg-slate-900/80 border border-rose-900/40 rounded-xl space-y-3">
+                    <div class="text-[11px] font-semibold text-rose-300 flex items-center justify-between">
+                        <span><i class="fa-solid fa-calculator"></i> 額度雙向自動對算</span>
+                        <span class="text-[10px] text-slate-400">填寫任意一項，另一項自動推算</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-300 mb-1">已刷卡/欠款 (Spent)</label>
+                            <input type="number" step="1" x-model.number="creditForm.spent" @input="onSpentChange()" placeholder="0" class="w-full px-3 py-2 bg-slate-800 border border-rose-800/60 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-rose-400 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-300 mb-1">剩餘可用額度 (Remaining)</label>
+                            <input type="number" step="1" x-model.number="creditForm.remaining" @input="onRemainingChange()" placeholder="0" class="w-full px-3 py-2 bg-slate-800 border border-emerald-800/60 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-emerald-400 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">每月繳款截止日 (期)</label>
+                    <input type="number" min="1" max="31" x-model.number="creditForm.dueDate" placeholder="例如: 15 (代表每月15號)" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
+                    <button type="button" @click="showCreditModal = false" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 rounded-xl transition">取消</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition" x-text="isEditCredit ? '儲存變更' : '確認新增'"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 收支紀錄 Modal (Transaction Modal) -->
+    <div x-cloak x-show="showTxModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.outside="showTxModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="text-base font-bold">紀錄收支動態</h3>
+                <button @click="showTxModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form @submit.prevent="saveTransaction()" class="space-y-4">
+                <!-- 類型選擇: 收入/支出 -->
+                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-xl border border-slate-700">
+                    <button type="button" @click="txForm.type = 'expense'" :class="txForm.type === 'expense' ? 'bg-rose-600 text-white font-bold' : 'text-slate-400'" class="py-2 text-xs rounded-lg transition">
+                        <i class="fa-solid fa-arrow-down mr-1"></i> 支出 (Expense)
+                    </button>
+                    <button type="button" @click="txForm.type = 'income'" :class="txForm.type === 'income' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-400'" class="py-2 text-xs rounded-lg transition">
+                        <i class="fa-solid fa-arrow-up mr-1"></i> 收入 (Income)
+                    </button>
+                </div>
+
+                <!-- 選擇帳戶/信用卡 -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">扣款/入賬之帳戶或信用卡</label>
+                    <select x-model="txForm.targetCompositeKey" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                        <optgroup label="銀行帳戶 (Bank Accounts)">
+                            <template x-for="b in bankAccounts" :key="'bank_' + b.id">
+                                <option :value="'bank_' + b.id" x-text="b.bankName + ' - ' + b.accountName"></option>
+                            </template>
+                        </optgroup>
+                        <optgroup label="信用卡 (Credit Cards)">
+                            <template x-for="c in creditCards" :key="'credit_' + c.id">
+                                <option :value="'credit_' + c.id" x-text="c.bankName + ' - ' + c.cardName"></option>
+                            </template>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">金額 (HKD)</label>
+                        <input type="number" step="0.01" min="0.01" x-model.number="txForm.amount" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">類別</label>
+                        <select x-model="txForm.category" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                            <option value="飲食外賣">飲食外賣</option>
+                            <option value="日常購物">日常購物</option>
+                            <option value="交通出行">交通出行</option>
+                            <option value="房屋水電">房屋水電</option>
+                            <option value="娛樂休閒">娛樂休閒</option>
+                            <option value="薪資出糧">薪資出糧</option>
+                            <option value="卡費還款">卡費還款</option>
+                            <option value="其他收支">其他收支</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">日期</label>
+                        <input type="date" x-model="txForm.date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">備註說明</label>
+                        <input type="text" x-model="txForm.notes" placeholder="例如: 午餐、超市購物" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
+                    <button type="button" @click="showTxModal = false" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 rounded-xl transition">取消</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition">記錄並更新餘額</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function hkFinanceApp() {
+            return {
+                activeTab: 'dashboard', // dashboard, accounts, credits, transactions
+
+                bankAccounts: [],
+                creditCards: [],
+                transactions: [],
+
+                // Modal 狀態
+                showBankModal: false,
+                isEditBank: false,
+                bankForm: { id: null, bankName: '', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '' },
+
+                showCreditModal: false,
+                isEditCredit: false,
+                creditForm: { id: null, bankName: '', cardName: '', limit: 50000, spent: 0, remaining: 50000, dueDate: '' },
+
+                showTxModal: false,
+                txForm: { type: 'expense', targetCompositeKey: '', amount: '', category: '飲食外賣', date: new Date().toISOString().slice(0, 10), notes: '' },
+
+                // Chart.js 實例
+                assetDebtChart: null,
+                accountsBarChart: null,
+
+                // 預設香港情境 Demo Data
+                defaultData: {
+                    bankAccounts: [
+                        { id: 1, bankName: 'HSBC 匯豐銀行', accountName: '港幣出糧戶口', currency: 'HKD', exchangeRate: 1, rawBalance: 128500, balance: 128500, notes: '主要薪水與轉款戶口' },
+                        { id: 2, bankName: 'Mox Bank', accountName: '高息儲蓄戶口', currency: 'HKD', exchangeRate: 1, rawBalance: 65000, balance: 65000, notes: '活期高息存款' },
+                        { id: 3, bankName: 'Standard Chartered 渣打', accountName: '美金投資戶口', currency: 'USD', exchangeRate: 7.82, rawBalance: 3500, balance: 27370, notes: '美股與外幣投資' }
+                    ],
+                    creditCards: [
+                        { id: 1, bankName: 'HSBC 匯豐', cardName: 'HSBC Red 卡', limit: 80000, spent: 12400, remaining: 67600, dueDate: 15 },
+                        { id: 2, bankName: '安信', cardName: 'EarnMORE 2%回贈卡', limit: 50000, spent: 4500, remaining: 45500, dueDate: 22 },
+                        { id: 3, bankName: 'Hang Seng 恒生', cardName: 'MMK 購物卡', limit: 60000, spent: 18200, remaining: 41800, dueDate: 5 }
+                    ],
+                    transactions: [
+                        { id: 101, date: new Date().toISOString().slice(0, 10), targetType: 'credit', targetId: 1, targetName: 'HSBC 匯豐 - HSBC Red 卡', type: 'expense', amount: 880, category: '日常購物', notes: '網購日用品' },
+                        { id: 102, date: new Date().toISOString().slice(0, 10), targetType: 'bank', targetId: 1, targetName: 'HSBC 匯豐銀行 - 港幣出糧戶口', type: 'income', amount: 35000, category: '薪資出糧', notes: '本月薪資收入' }
+                    ]
+                },
+
+                initApp() {
+                    this.loadStoredData();
+                    this.$nextTick(() => {
+                        this.initCharts();
+                    });
+
+                    // 監聽變化自動更新
+                    this.$watch('bankAccounts', () => { this.saveData(); this.updateCharts(); }, { deep: true });
+                    this.$watch('creditCards', () => { this.saveData(); this.updateCharts(); }, { deep: true });
+                    this.$watch('transactions', () => { this.saveData(); this.updateCharts(); }, { deep: true });
+                },
+
+                // 計算屬性
+                get totalBankBalance() {
+                    return this.bankAccounts.reduce((sum, a) => sum + Number(a.balance || 0), 0);
+                },
+
+                get totalCreditSpent() {
+                    return this.creditCards.reduce((sum, c) => sum + Number(c.spent || 0), 0);
+                },
+
+                get totalCreditRemaining() {
+                    return this.creditCards.reduce((sum, c) => sum + Number(c.remaining || 0), 0);
+                },
+
+                get totalCreditLimit() {
+                    return this.creditCards.reduce((sum, c) => sum + Number(c.limit || 0), 0);
+                },
+
+                get netWorth() {
+                    return this.totalBankBalance - this.totalCreditSpent;
+                },
+
+                get creditUtilizationRate() {
+                    if (this.totalCreditLimit === 0) return 0;
+                    return (this.totalCreditSpent / this.totalCreditLimit) * 100;
+                },
+
+                // 本地儲存與載入
+                loadStoredData() {
+                    const saved = localStorage.getItem('hk_finance_data_v1');
+                    if (saved) {
+                        try {
+                            const parsed = JSON.parse(saved);
+                            this.bankAccounts = parsed.bankAccounts || [];
+                            this.creditCards = parsed.creditCards || [];
+                            this.transactions = parsed.transactions || [];
+                        } catch (e) {
+                            this.loadDefaultData();
+                        }
+                    } else {
+                        this.loadDefaultData();
+                    }
+                },
+
+                loadDefaultData() {
+                    this.bankAccounts = JSON.parse(JSON.stringify(this.defaultData.bankAccounts));
+                    this.creditCards = JSON.parse(JSON.stringify(this.defaultData.creditCards));
+                    this.transactions = JSON.parse(JSON.stringify(this.defaultData.transactions));
+                    this.saveData();
+                },
+
+                saveData() {
+                    localStorage.setItem('hk_finance_data_v1', JSON.stringify({
+                        bankAccounts: this.bankAccounts,
+                        creditCards: this.creditCards,
+                        transactions: this.transactions
+                    }));
+                },
+
+                confirmReset() {
+                    if (confirm('確定要將所有數據重置為香港預設範例資料嗎？')) {
+                        this.loadDefaultData();
+                    }
+                },
+
+                exportData() {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                        bankAccounts: this.bankAccounts,
+                        creditCards: this.creditCards,
+                        transactions: this.transactions
+                    }, null, 2));
+                    const a = document.createElement('a');
+                    a.setAttribute("href", dataStr);
+                    a.setAttribute("download", `HK_Finance_Data_${new Date().toISOString().slice(0, 10)}.json`);
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                },
+
+                importData(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        try {
+                            const imported = JSON.parse(evt.target.result);
+                            if (imported.bankAccounts && imported.creditCards) {
+                                this.bankAccounts = imported.bankAccounts;
+                                this.creditCards = imported.creditCards;
+                                this.transactions = imported.transactions || [];
+                                alert('成功匯入資料！');
+                            }
+                        } catch (err) {
+                            alert('無法讀取 JSON 檔案。');
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+
+                // 信用卡 雙向額度算算邏輯 (Dual Calculation Logic)
+                onLimitChange() {
+                    const limit = Number(this.creditForm.limit) || 0;
+                    const spent = Number(this.creditForm.spent) || 0;
+                    this.creditForm.remaining = Math.max(0, limit - spent);
+                },
+
+                onSpentChange() {
+                    const limit = Number(this.creditForm.limit) || 0;
+                    const spent = Number(this.creditForm.spent) || 0;
+                    this.creditForm.remaining = Math.max(0, limit - spent);
+                },
+
+                onRemainingChange() {
+                    const limit = Number(this.creditForm.limit) || 0;
+                    const remaining = Number(this.creditForm.remaining) || 0;
+                    this.creditForm.spent = Math.max(0, limit - remaining);
+                },
+
+                // 銀行戶口彈窗操作
+                openBankModal() {
+                    this.isEditBank = false;
+                    this.bankForm = { id: Date.now(), bankName: '', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '' };
+                    this.showBankModal = true;
+                },
+
+                editBankModal(acc) {
+                    this.isEditBank = true;
+                    this.bankForm = JSON.parse(JSON.stringify(acc));
+                    this.showBankModal = true;
+                },
+
+                updateExchangeRate() {
+                    const rates = { HKD: 1, USD: 7.82, RMB: 1.08, JPY: 0.052, GBP: 10.1 };
+                    this.bankForm.exchangeRate = rates[this.bankForm.currency] || 1;
+                    this.bankForm.balance = this.bankForm.rawBalance * this.bankForm.exchangeRate;
+                },
+
+                saveBankAccount() {
+                    this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate || 1);
+                    if (this.isEditBank) {
+                        const idx = this.bankAccounts.findIndex(a => a.id === this.bankForm.id);
+                        if (idx !== -1) this.bankAccounts[idx] = { ...this.bankForm };
+                    } else {
+                        this.bankAccounts.push({ ...this.bankForm });
+                    }
+                    this.showBankModal = false;
+                },
+
+                deleteBankAccount(id) {
+                    if (confirm('確定刪除此銀行帳戶？')) {
+                        this.bankAccounts = this.bankAccounts.filter(a => a.id !== id);
+                    }
+                },
+
+                // 信用卡彈窗操作
+                openCreditModal() {
+                    this.isEditCredit = false;
+                    this.creditForm = { id: Date.now(), bankName: '', cardName: '', limit: 50000, spent: 0, remaining: 50000, dueDate: '' };
+                    this.showCreditModal = true;
+                },
+
+                editCreditModal(card) {
+                    this.isEditCredit = true;
+                    this.creditForm = JSON.parse(JSON.stringify(card));
+                    this.showCreditModal = true;
+                },
+
+                saveCreditCard() {
+                    const limit = Number(this.creditForm.limit) || 0;
+                    const spent = Number(this.creditForm.spent) || 0;
+                    this.creditForm.remaining = limit - spent;
+
+                    if (this.isEditCredit) {
+                        const idx = this.creditCards.findIndex(c => c.id === this.creditForm.id);
+                        if (idx !== -1) this.creditCards[idx] = { ...this.creditForm };
+                    } else {
+                        this.creditCards.push({ ...this.creditForm });
+                    }
+                    this.showCreditModal = false;
+                },
+
+                deleteCreditCard(id) {
+                    if (confirm('確定刪除此信用卡？')) {
+                        this.creditCards = this.creditCards.filter(c => c.id !== id);
+                    }
+                },
+
+                // 收支紀錄操作 (Transaction Logging & Auto Balance Update)
+                openTxModal(preType = null, preId = null) {
+                    let defaultKey = '';
+                    if (preType === 'bank' && preId) {
+                        defaultKey = 'bank_' + preId;
+                    } else if (preType === 'credit' && preId) {
+                        defaultKey = 'credit_' + preId;
+                    } else if (this.bankAccounts.length > 0) {
+                        defaultKey = 'bank_' + this.bankAccounts[0].id;
+                    } else if (this.creditCards.length > 0) {
+                        defaultKey = 'credit_' + this.creditCards[0].id;
+                    }
+
+                    this.txForm = {
+                        type: 'expense',
+                        targetCompositeKey: defaultKey,
+                        amount: '',
+                        category: '飲食外賣',
+                        date: new Date().toISOString().slice(0, 10),
+                        notes: ''
+                    };
+                    this.showTxModal = true;
+                },
+
+                saveTransaction() {
+                    if (!this.txForm.targetCompositeKey || !this.txForm.amount) return;
+
+                    const [targetType, targetIdStr] = this.txForm.targetCompositeKey.split('_');
+                    const targetId = Number(targetIdStr);
+                    const amount = Number(this.txForm.amount);
+
+                    let targetName = '';
+
+                    // 1. 即時更新帳戶餘額或信用卡欠款
+                    if (targetType === 'bank') {
+                        const acc = this.bankAccounts.find(b => b.id === targetId);
+                        if (acc) {
+                            targetName = `${acc.bankName} - ${acc.accountName}`;
+                            if (this.txForm.type === 'income') {
+                                acc.rawBalance = Number(acc.rawBalance) + (amount / acc.exchangeRate);
+                            } else {
+                                acc.rawBalance = Number(acc.rawBalance) - (amount / acc.exchangeRate);
+                            }
+                            acc.balance = acc.rawBalance * acc.exchangeRate;
+                        }
+                    } else if (targetType === 'credit') {
+                        const card = this.creditCards.find(c => c.id === targetId);
+                        if (card) {
+                            targetName = `${card.bankName} - ${card.cardName}`;
+                            if (this.txForm.type === 'expense') {
+                                card.spent = Number(card.spent) + amount;
+                            } else {
+                                // 繳款/還款收入
+                                card.spent = Math.max(0, Number(card.spent) - amount);
+                            }
+                            card.remaining = Math.max(0, card.limit - card.spent);
+                        }
+                    }
+
+                    // 2. 插入交易日誌
+                    const newTx = {
+                        id: Date.now(),
+                        date: this.txForm.date,
+                        targetType,
+                        targetId,
+                        targetName,
+                        type: this.txForm.type,
+                        amount,
+                        category: this.txForm.category,
+                        notes: this.txForm.notes
+                    };
+
+                    this.transactions.unshift(newTx);
+                    this.showTxModal = false;
+                },
+
+                deleteTransaction(id) {
+                    if (confirm('確定刪除此交易紀錄？(注意：不會自動撤銷已被修改的餘額)')) {
+                        this.transactions = this.transactions.filter(t => t.id !== id);
+                    }
+                },
+
+                getCategoryIcon(cat) {
+                    const icons = {
+                        '飲食外賣': 'fa-solid fa-utensils',
+                        '日常購物': 'fa-solid fa-cart-shopping',
+                        '交通出行': 'fa-solid fa-bus',
+                        '房屋水電': 'fa-solid fa-house',
+                        '娛樂休閒': 'fa-solid fa-gamepad',
+                        '薪資出糧': 'fa-solid fa-money-bill-wave',
+                        '卡費還款': 'fa-solid fa-credit-card',
+                        '其他收支': 'fa-solid fa-coins'
+                    };
+                    return icons[cat] || 'fa-solid fa-tag';
+                },
+
+                initCharts() {
+                    // 圖表顏色深色主題設定
+                    Chart.defaults.color = '#94a3b8';
+                    Chart.defaults.borderColor = '#334155';
+
+                    // 1. 資產負債 Doughnut Chart
+                    const ctxDoughnut = document.getElementById('assetDebtChart').getContext('2d');
+                    this.assetDebtChart = new Chart(ctxDoughnut, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['銀行總存款', '信用卡總欠款'],
+                            datasets: [{
+                                data: [this.totalBankBalance, this.totalCreditSpent],
+                                backgroundColor: ['#10b981', '#f43f5e'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { font: { size: 11 } } }
+                            },
+                            cutout: '72%'
+                        }
+                    });
+
+                    // 2. 分布 Bar Chart
+                    const ctxBar = document.getElementById('accountsBarChart').getContext('2d');
+                    this.accountsBarChart = new Chart(ctxBar, {
+                        type: 'bar',
+                        data: this.getBarChartData(),
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: '#1e293b' } },
+                                x: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: true, position: 'top', labels: { font: { size: 11 } } }
+                            }
+                        }
+                    });
+                },
+
+                getBarChartData() {
+                    const bankLabels = this.bankAccounts.map(b => b.bankName);
+                    const bankData = this.bankAccounts.map(b => b.balance);
+
+                    const cardLabels = this.creditCards.map(c => c.cardName);
+                    const cardData = this.creditCards.map(c => c.spent);
+
+                    return {
+                        labels: [...bankLabels, ...cardLabels],
+                        datasets: [
+                            {
+                                label: '存款餘額 (HKD)',
+                                data: [...bankData, ...cardLabels.map(() => 0)],
+                                backgroundColor: '#10b981',
+                                borderRadius: 6
+                            },
+                            {
+                                label: '刷卡欠款 (HKD)',
+                                data: [...bankLabels.map(() => 0), ...cardData],
+                                backgroundColor: '#f43f5e',
+                                borderRadius: 6
+                            }
+                        ]
+                    };
+                },
+
+                updateCharts() {
+                    if (this.assetDebtChart) {
+                        this.assetDebtChart.data.datasets[0].data = [this.totalBankBalance, this.totalCreditSpent];
+                        this.assetDebtChart.update();
+                    }
+                    if (this.accountsBarChart) {
+                        const barData = this.getBarChartData();
+                        this.accountsBarChart.data.labels = barData.labels;
+                        this.accountsBarChart.data.datasets = barData.datasets;
+                        this.accountsBarChart.update();
+                    }
+                },
+
+                formatNumber(val) {
+                    if (val === undefined || val === null || isNaN(val)) return '0';
+                    return Math.round(val).toLocaleString('en-US');
+                }
+            };
+        }
+    </script>
+</body>
+</html>
