@@ -69,120 +69,134 @@
     <!-- 頂部導航欄 (Top Header) -->
     <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/80 sticky top-0 z-30 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            
+            <!-- 左上角按鈕：點擊返回主頁 (概覽) -->
+            <div @click="activeTab = 'dashboard'" class="flex items-center space-x-3 cursor-pointer group">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:bg-indigo-500 transition">
                     <i class="fa-solid fa-vault text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-bold text-white leading-tight flex items-center gap-2">
+                    <h1 class="text-base sm:text-lg font-bold text-white leading-tight flex items-center gap-2 group-hover:text-indigo-300 transition">
                         香港個人理財管理
                         <span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">HKD ($)</span>
                     </h1>
-                    <p class="text-xs text-slate-400">存款、信用卡雙向卡債、小數精確度與收支追蹤</p>
+                    <p class="text-xs text-slate-400">點擊返主頁 | 存款、現金與卡債追蹤</p>
                 </div>
             </div>
+
+            <!-- 電腦端導航選單 (Desktop Navigation Bar) -->
+            <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/80 border border-slate-700/80 p-1 rounded-xl">
+                <button @click="activeTab = 'dashboard'" 
+                        :class="activeTab === 'dashboard' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                        class="px-3.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-line"></i> 概覽
+                </button>
+                <button @click="activeTab = 'accounts'" 
+                        :class="activeTab === 'accounts' ? 'bg-emerald-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                        class="px-3.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-building-columns"></i> 銀行/現金
+                </button>
+                <button @click="activeTab = 'credits'" 
+                        :class="activeTab === 'credits' ? 'bg-rose-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                        class="px-3.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-credit-card"></i> 信用卡
+                </button>
+                <button @click="activeTab = 'transactions'" 
+                        :class="activeTab === 'transactions' ? 'bg-amber-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                        class="px-3.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check"></i> 收支紀錄
+                </button>
+            </nav>
             
-            <!-- 桌面端工具按鈕 -->
-            <div class="hidden md:flex items-center space-x-2">
-                <!-- 位數精確度切換按鈕 (2位小數 / 個位數 / 全位) -->
-                <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-xl p-1 space-x-1">
-                    <span class="text-[11px] text-slate-400 px-2 font-medium"><i class="fa-solid fa-sliders text-indigo-400 mr-1"></i>顯示位數:</span>
-                    <button @click="setGlobalPrecision('2dp')" 
-                            :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
-                            class="px-2.5 py-1 text-xs rounded-lg transition" title="四捨五入至2位小數 (例如 HK$12,850.46)">
-                        2位小數
-                    </button>
-                    <button @click="setGlobalPrecision('unit')" 
-                            :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
-                            class="px-2.5 py-1 text-xs rounded-lg transition" title="取至個位數整數 (例如 HK$12,850)">
-                        整數個位
-                    </button>
-                    <button @click="setGlobalPrecision('full')" 
-                            :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
-                            class="px-2.5 py-1 text-xs rounded-lg transition" title="顯示完整高精度小數">
-                        完整小數
-                    </button>
+            <!-- 右側工具按鈕 (桌面端 + 手機端備份彈窗按鈕) -->
+            <div class="flex items-center space-x-2">
+                <!-- 顯示位數切換 (桌面端) -->
+                <div class="hidden md:flex items-center bg-slate-900/90 border border-slate-700 rounded-xl p-1 space-x-1">
+                    <span class="text-[11px] text-slate-400 px-2 font-medium"><i class="fa-solid fa-sliders text-indigo-400 mr-1"></i>位數:</span>
+                    <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'" class="px-2 py-1 text-xs rounded-lg transition">2位</button>
+                    <button @click="setGlobalPrecision('unit')" :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'" class="px-2 py-1 text-xs rounded-lg transition">整數</button>
+                    <button @click="setGlobalPrecision('full')" :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'" class="px-2 py-1 text-xs rounded-lg transition">完整</button>
                 </div>
 
                 <button @click="openTxModal()" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow transition flex items-center gap-1.5">
                     <i class="fa-solid fa-plus"></i>
-                    <span>記一筆收支</span>
+                    <span class="hidden sm:inline">記一筆收支</span>
                 </button>
-                <button @click="exportData()" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-download"></i>
-                    <span>備份</span>
-                </button>
-                <label class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition cursor-pointer flex items-center gap-1.5">
-                    <i class="fa-solid fa-upload"></i>
-                    <span>還原</span>
-                    <input type="file" accept=".json" @change="importData($event)" class="hidden">
-                </label>
-                <button @click="confirmReset()" class="px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-xl transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-rotate-left"></i>
-                    <span>重置</span>
+
+                <!-- 電腦端數據備份還原工具 -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <button @click="exportData()" class="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition" title="備份 JSON">
+                        <i class="fa-solid fa-download mr-1"></i>備份
+                    </button>
+                    <label class="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition cursor-pointer" title="還原 JSON">
+                        <i class="fa-solid fa-upload mr-1"></i>還原
+                        <input type="file" accept=".json" @change="importData($event)" class="hidden">
+                    </label>
+                    <button @click="confirmReset()" class="px-2 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-xl transition" title="重置">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <!-- 手機端數據管理選單按鈕 -->
+                <button @click="showDataMenuModal = true" class="md:hidden p-2 text-slate-300 hover:text-white bg-slate-700/80 rounded-xl border border-slate-600/80 text-xs flex items-center gap-1">
+                    <i class="fa-solid fa-database"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 主要內容區域 (Main Content Area) -->
+    <!-- 主要內容區域 -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
 
-        <!-- 全局位數切換 (手機版顯示) -->
+        <!-- 全局位數切換 (手機版) -->
         <div class="md:hidden flex items-center justify-between bg-slate-800 p-3 rounded-2xl border border-slate-700 text-xs">
             <span class="text-slate-400 font-medium">顯示位數:</span>
             <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-700">
-                <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">2位小數</button>
-                <button @click="setGlobalPrecision('unit')" :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">個位數</button>
-                <button @click="setGlobalPrecision('full')" :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2 py-1 text-[11px] rounded-lg">完整小數</button>
+                <button @click="setGlobalPrecision('2dp')" :class="precisionMode === '2dp' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2.5 py-1 text-[11px] rounded-lg">2位小數</button>
+                <button @click="setGlobalPrecision('unit')" :class="precisionMode === 'unit' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2.5 py-1 text-[11px] rounded-lg">個位數</button>
+                <button @click="setGlobalPrecision('full')" :class="precisionMode === 'full' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400'" class="px-2.5 py-1 text-[11px] rounded-lg">完整小數</button>
             </div>
         </div>
 
-        <!-- Tab 1: 總覽儀表板 (Dashboard Tab) -->
+        <!-- Tab 1: 總覽儀表板 (Dashboard) -->
         <div x-show="activeTab === 'dashboard'" x-cloak class="space-y-6">
-            <!-- 核心指標卡片 (Summary Cards Grid) -->
+            
+            <!-- 核心指標卡片 Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- 淨資產 -->
                 <div class="bg-gradient-to-br from-indigo-900/90 to-slate-800 border border-indigo-700/50 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between">
-                    <div class="absolute -right-2 -bottom-2 opacity-10 text-7xl text-indigo-200">
-                        <i class="fa-solid fa-scale-balanced"></i>
-                    </div>
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">淨資產 Net Worth</span>
-                            <span class="text-[10px] text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">點擊切換精確度</span>
                         </div>
                         <div class="text-2xl sm:text-3xl font-extrabold money-click" 
                              :class="netWorth >= 0 ? 'text-white' : 'text-rose-400'"
-                             @click="toggleItemPrecision('netWorth')"
-                             title="點擊切換完整小數點">
+                             @click="toggleItemPrecision('netWorth')">
                             HK$ <span x-text="formatMoney(netWorth, 'netWorth')">0</span>
                         </div>
                     </div>
                     <div class="mt-4 pt-3 border-t border-indigo-800/60 text-xs text-indigo-200 flex justify-between items-center">
-                        <span>存款總額扣除信用卡債務</span>
+                        <span>含港幣現金與銀行總存款扣除卡債</span>
                         <i class="fa-solid fa-shield-halved text-indigo-400"></i>
                     </div>
                 </div>
 
-                <!-- 銀行存款總額 -->
+                <!-- 銀行總存款 (含港幣現金) -->
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
-                            <span>銀行總存款</span>
+                            <span>銀行總存款 (含港幣現金)</span>
                             <div class="w-7 h-7 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center">
                                 <i class="fa-solid fa-building-columns text-xs"></i>
                             </div>
                         </div>
                         <div class="text-2xl font-bold text-emerald-400 money-click" 
-                             @click="toggleItemPrecision('totalBank')"
-                             title="點擊切換小數點">
+                             @click="toggleItemPrecision('totalBank')">
                             HK$ <span x-text="formatMoney(totalBankBalance, 'totalBank')">0</span>
                         </div>
                     </div>
                     <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
-                        <span>帳戶數量：<strong class="text-slate-200" x-text="bankAccounts.length">0</strong> 個</span>
-                        <span class="text-emerald-400 font-medium"><i class="fa-solid fa-arrow-up text-[10px]"></i> 資產</span>
+                        <span>帳戶: <strong class="text-slate-200" x-text="bankAccounts.length">0</strong> | 港幣現金: <strong class="text-emerald-300">HK$<span x-text="formatMoney(hkdCashBalance)"></span></strong></span>
                     </div>
                 </div>
 
@@ -190,14 +204,13 @@
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
-                            <span>信用卡總欠款 (已用額度)</span>
+                            <span>信用卡總欠款</span>
                             <div class="w-7 h-7 rounded-lg bg-rose-950/80 text-rose-400 border border-rose-800/50 flex items-center justify-center">
                                 <i class="fa-solid fa-credit-card text-xs"></i>
                             </div>
                         </div>
                         <div class="text-2xl font-bold text-rose-400 money-click" 
-                             @click="toggleItemPrecision('totalCredit')"
-                             title="點擊切換小數點">
+                             @click="toggleItemPrecision('totalCredit')">
                             HK$ <span x-text="formatMoney(totalCreditSpent, 'totalCredit')">0</span>
                         </div>
                     </div>
@@ -207,39 +220,74 @@
                     </div>
                 </div>
 
-                <!-- 額度使用率 -->
+                <!-- 外幣現金總覽 (含折合 HKD 總額) -->
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-1">
-                            <span>信用額度使用率</span>
+                            <span>外幣現金 (不計入港幣總存款)</span>
                             <div class="w-7 h-7 rounded-lg bg-amber-950/80 text-amber-400 border border-amber-800/50 flex items-center justify-center">
-                                <i class="fa-solid fa-percent text-xs"></i>
+                                <i class="fa-solid fa-coins text-xs"></i>
                             </div>
                         </div>
-                        <div class="flex items-baseline justify-between">
-                            <div class="text-2xl font-bold text-white">
-                                <span x-text="creditUtilizationRate.toFixed(1)">0</span>%
-                            </div>
-                            <span class="text-xs text-slate-400">總額度: 
-                                <strong class="text-slate-200 money-click" 
-                                        @click="toggleItemPrecision('totalLimit')" 
-                                        title="點擊切換小數點">
-                                    HK$ <span x-text="formatMoney(totalCreditLimit, 'totalLimit')">0</span>
-                                </strong>
-                            </span>
+                        
+                        <!-- ✨ 顯示所有外幣兌港幣之總額 -->
+                        <div class="text-lg font-bold text-amber-400 my-1 money-click" @click="toggleItemPrecision('totalForeignCashHkd')">
+                            折合 HK$ <span x-text="formatMoney(totalForeignCashHkdBalance, 'totalForeignCashHkd')">0</span>
+                        </div>
+
+                        <div class="text-xs space-y-1 mt-2 border-t border-slate-700/50 pt-2 max-h-24 overflow-y-auto">
+                            <template x-for="c in foreignCashList" :key="c.id">
+                                <div class="flex justify-between items-center text-slate-300">
+                                    <span class="font-medium" x-text="c.cashName + ' (' + c.currency + ')'"></span>
+                                    <span class="font-bold text-amber-300" x-text="formatMoney(c.rawBalance) + ' ' + c.currency"></span>
+                                </div>
+                            </template>
+                            <div x-show="foreignCashList.length === 0" class="text-slate-500 text-xs">尚無外幣現金紀錄</div>
                         </div>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-slate-700/60">
-                        <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full transition-all duration-500" 
-                                 :class="creditUtilizationRate > 50 ? 'bg-rose-500' : (creditUtilizationRate > 30 ? 'bg-amber-400' : 'bg-emerald-400')"
-                                 :style="`width: ${Math.min(creditUtilizationRate, 100)}%`"></div>
-                        </div>
+                    <div class="mt-3 pt-2 border-t border-slate-700/60 text-[11px] text-slate-400">
+                        獨立外幣現金，提供個別收支紀錄
                     </div>
                 </div>
             </div>
 
-            <!-- 圖表分析區塊 (Charts Grid) -->
+            <!-- ⏰ 嚟緊要還款嘅信用卡 (含月結日與還款日獨立顯示) -->
+            <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-amber-400 animate-bounce"></i> 嚟緊要還款嘅信用卡 (按還款日排序)
+                    </h2>
+                    <span class="text-xs text-slate-400">自動倒數距離還款日剩餘天數</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <template x-for="card in upcomingPayments" :key="'due_' + card.id">
+                        <div class="p-3.5 rounded-xl border flex justify-between items-center bg-slate-900/80"
+                             :class="card.daysLeft <= 3 ? 'border-rose-500/80 bg-rose-950/20' : 'border-slate-700/80'">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm" x-text="card.bankName + ' - ' + card.cardName"></div>
+                                <div class="text-xs text-slate-400 mt-1 space-y-0.5">
+                                    <div>月結日: <span class="text-slate-300" x-text="card.statementDate ? '每月 ' + card.statementDate + ' 日' : '未設定'"></span></div>
+                                    <div>還款日: <span class="text-amber-300 font-semibold" x-text="card.nextDueDateStr"></span></div>
+                                </div>
+                                <div class="text-[11px] mt-1.5 font-bold"
+                                     :class="card.daysLeft <= 3 ? 'text-rose-400' : 'text-amber-400'">
+                                    <i class="fa-regular fa-clock mr-1"></i>
+                                    <span x-text="card.daysLeft === 0 ? '今日到期!' : (card.daysLeft < 0 ? '已過期 ' + Math.abs(card.daysLeft) + ' 日' : '隔離仲有 ' + card.daysLeft + ' 日')"></span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-slate-400 block">要還金額</span>
+                                <span class="text-base font-extrabold text-rose-400">HK$ <span x-text="formatMoney(card.spent)"></span></span>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="upcomingPayments.length === 0" class="col-span-full py-4 text-center text-xs text-slate-500">
+                        暫無需還款之信用卡欠款（或未填寫還款日）
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表分析區塊 -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
@@ -250,20 +298,12 @@
                     <div class="relative h-56 flex items-center justify-center">
                         <canvas id="assetDebtChart"></canvas>
                     </div>
-                    <div class="text-center text-xs text-slate-400 mt-3">
-                        可用總信用額度：
-                        <strong class="text-amber-300 money-click" 
-                                @click="toggleItemPrecision('totalRemaining')" 
-                                title="點擊切換小數點">
-                            HK$ <span x-text="formatMoney(totalCreditRemaining, 'totalRemaining')">0</span>
-                        </strong>
-                    </div>
                 </div>
 
                 <div class="bg-slate-800 border border-slate-700/80 p-5 rounded-2xl shadow-sm lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-simple text-indigo-400"></i> 各機構餘額與刷卡欠款
+                            <i class="fa-solid fa-chart-simple text-indigo-400"></i> 各帳戶餘額與刷卡欠款
                         </h2>
                     </div>
                     <div class="relative h-56">
@@ -298,34 +338,36 @@
                             </div>
                             <div class="text-right font-bold text-sm money-click" 
                                  :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'"
-                                 @click="toggleItemPrecision('tx_' + tx.id)"
-                                 title="點擊切換小數點">
+                                 @click="toggleItemPrecision('tx_' + tx.id)">
                                 <span x-text="tx.type === 'income' ? '+' : '-'"></span>
                                 HK$ <span x-text="formatMoney(tx.amount, 'tx_' + tx.id)"></span>
                             </div>
                         </div>
                     </template>
-                    <div x-show="transactions.length === 0" class="py-6 text-center text-xs text-slate-500">
-                        尚無任何交易紀錄，點擊右上角「記一筆收支」開始紀錄。
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab 2: 銀行帳戶 (Bank Accounts Tab) -->
+        <!-- Tab 2: 銀行帳戶與現金 -->
         <div x-show="activeTab === 'accounts'" x-cloak class="space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
                 <div>
                     <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-building-columns text-emerald-400"></i> 銀行存款帳戶列表
+                        <i class="fa-solid fa-building-columns text-emerald-400"></i> 銀行存款帳戶與現金列表
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">管理香港本地及外幣存款戶，點擊任何金額可切換精確小數點顯示</p>
+                    <p class="text-xs text-slate-400 mt-1">港幣現金計算落總存款；外幣現金（人民幣、美金、波紙、泰銖、澳元、越南盾等）獨立計算與統計。</p>
                 </div>
-                <button @click="openBankModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus"></i> 新增銀行帳戶
-                </button>
+                <div class="flex gap-2">
+                    <button @click="openCashModal()" class="px-3 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-xl shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-coins"></i> 新增/管理現金
+                    </button>
+                    <button @click="openBankModal()" class="px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> 新增銀行帳戶
+                    </button>
+                </div>
             </div>
 
+            <!-- 銀行帳戶與現金卡片列表 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="acc in bankAccounts" :key="acc.id">
                     <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-5 shadow-sm relative flex flex-col justify-between hover:border-slate-600 transition">
@@ -333,7 +375,7 @@
                             <div class="flex items-start justify-between mb-3">
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 rounded-xl bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center font-bold text-sm">
-                                        <span x-text="acc.bankName ? acc.bankName.substring(0,2) : '銀'"></span>
+                                        <span x-text="acc.isCash ? '現' : (acc.bankName ? acc.bankName.substring(0,2) : '銀')"></span>
                                     </div>
                                     <div>
                                         <h3 class="font-bold text-slate-100 text-sm" x-text="acc.bankName"></h3>
@@ -341,7 +383,7 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <button @click="editBankModal(acc)" class="p-1.5 text-slate-400 hover:text-amber-300 rounded-lg transition text-xs">
+                                    <button @click="acc.isCash ? editCashModal(acc) : editBankModal(acc)" class="p-1.5 text-slate-400 hover:text-amber-300 rounded-lg transition text-xs">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                     <button @click="deleteBankAccount(acc.id)" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition text-xs">
@@ -352,20 +394,16 @@
                             <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 my-2">
                                 <div class="flex justify-between items-center text-[11px] text-slate-400">
                                     <span>目前餘額 (折合 HKD)</span>
-                                    <i class="fa-solid fa-hand-pointer text-[10px] text-emerald-500/70"></i>
                                 </div>
                                 <div class="text-xl font-bold text-emerald-400 mt-0.5 money-click" 
-                                     @click="toggleItemPrecision('bank_hkd_' + acc.id)"
-                                     title="點擊切換小數點">
+                                     @click="toggleItemPrecision('bank_hkd_' + acc.id)">
                                     HK$ <span x-text="formatMoney(acc.balance, 'bank_hkd_' + acc.id)"></span>
                                 </div>
                                 <div x-show="acc.currency !== 'HKD'" class="text-[10px] text-slate-400 mt-1">
                                     原幣: <span x-text="acc.currency"></span> 
                                     <span class="money-click text-slate-300 font-medium" 
                                           @click="toggleItemPrecision('bank_raw_' + acc.id)"
-                                          title="點擊切換小數點"
                                           x-text="formatMoney(acc.rawBalance, 'bank_raw_' + acc.id)"></span> 
-                                    (匯率: <span x-text="acc.exchangeRate"></span>)
                                 </div>
                             </div>
                         </div>
@@ -377,20 +415,17 @@
                         </div>
                     </div>
                 </template>
-                <div x-show="bankAccounts.length === 0" class="col-span-full py-12 text-center text-slate-500 bg-slate-800/40 rounded-2xl border border-dashed border-slate-700">
-                    尚無銀行帳戶，點擊右上角新增。
-                </div>
             </div>
         </div>
 
-        <!-- Tab 3: 信用卡與雙向額度對算 (Credit Cards Tab) -->
+        <!-- Tab 3: 信用卡與共享信用額 -->
         <div x-show="activeTab === 'credits'" x-cloak class="space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
                 <div>
                     <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-credit-card text-rose-400"></i> 信用卡與卡債管理
+                        <i class="fa-solid fa-credit-card text-rose-400"></i> 信用卡與卡債管理 (支援共享信用額、月結日與還款日)
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">輸入「總額度」及「已用欠款」或「剩餘可用」</p>
+                    <p class="text-xs text-slate-400 mt-1">預設信用額為 $10,000，可獨立輸入月結日與還款日，追蹤同銀行共享額度。</p>
                 </div>
                 <button @click="openCreditModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> 新增信用卡
@@ -400,12 +435,15 @@
             <!-- 卡片列表 Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <template x-for="card in creditCards" :key="card.id">
-                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-lg relative flex flex-col justify-between group">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-lg relative flex flex-col justify-between">
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div>
                                     <span class="text-xs font-semibold text-indigo-400" x-text="card.bankName"></span>
                                     <h3 class="font-bold text-slate-100 text-base" x-text="card.cardName"></h3>
+                                    <span x-show="card.isSharedLimit" class="text-[10px] bg-indigo-900/60 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-700/50">
+                                        <i class="fa-solid fa-link text-[9px] mr-1"></i>共享信用額
+                                    </span>
                                 </div>
                                 <div class="flex items-center space-x-1 bg-slate-800/90 rounded-lg p-1 border border-slate-700">
                                     <button @click="editCreditModal(card)" class="p-1 text-slate-400 hover:text-amber-300 text-xs">
@@ -417,30 +455,28 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-8 h-6 rounded bg-amber-400/80 flex items-center justify-center text-slate-900 text-xs font-bold">
-                                    <i class="fa-solid fa-microchip"></i>
+                            <div class="flex items-center justify-between mb-4 text-[11px] text-slate-400 bg-slate-900/50 p-2 rounded-lg border border-slate-700/40">
+                                <div>
+                                    月結日: <span class="text-slate-200 font-semibold" x-text="card.statementDate ? '每月 ' + card.statementDate + ' 日' : '未設定'"></span>
                                 </div>
-                                <div class="text-[11px] text-slate-400">
-                                    截單/繳款日: <span class="text-amber-300 font-semibold" x-text="card.dueDate ? '每月 ' + card.dueDate + ' 日' : '未設定'"></span>
+                                <div>
+                                    還款日: <span class="text-amber-300 font-semibold" x-text="card.dueDate ? '每月 ' + card.dueDate + ' 日' : '未設定'"></span>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 mb-3">
                                 <div>
-                                    <span class="text-[10px] text-slate-400 block mb-0.5">已刷欠款 (Spent)</span>
+                                    <span class="text-[10px] text-slate-400 block mb-0.5">此卡已刷/欠款</span>
                                     <span class="text-base font-bold text-rose-400 money-click"
-                                          @click="toggleItemPrecision('card_spent_' + card.id)"
-                                          title="點擊切換小數點">
+                                          @click="toggleItemPrecision('card_spent_' + card.id)">
                                         HK$ <span x-text="formatMoney(card.spent, 'card_spent_' + card.id)"></span>
                                     </span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-slate-400 block mb-0.5">剩餘可用 (Available)</span>
+                                    <span class="text-[10px] text-slate-400 block mb-0.5">剩餘可用 (共享/獨立)</span>
                                     <span class="text-base font-bold text-emerald-400 money-click"
-                                          @click="toggleItemPrecision('card_rem_' + card.id)"
-                                          title="點擊切換小數點">
-                                        HK$ <span x-text="formatMoney(card.remaining, 'card_rem_' + card.id)"></span>
+                                          @click="toggleItemPrecision('card_rem_' + card.id)">
+                                        HK$ <span x-text="formatMoney(getCardRemaining(card), 'card_rem_' + card.id)"></span>
                                     </span>
                                 </div>
                             </div>
@@ -450,18 +486,10 @@
                             <div class="flex justify-between items-center text-xs text-slate-400">
                                 <span>總額度: 
                                     <strong class="text-slate-200 font-medium money-click"
-                                            @click="toggleItemPrecision('card_limit_' + card.id)"
-                                            title="點擊切換小數點">
+                                            @click="toggleItemPrecision('card_limit_' + card.id)">
                                         HK$ <span x-text="formatMoney(card.limit, 'card_limit_' + card.id)"></span>
                                     </strong>
                                 </span>
-                                <span class="font-semibold" :class="(card.spent / (card.limit || 1)) > 0.8 ? 'text-rose-400' : 'text-slate-300'" 
-                                      x-text="((card.spent / (card.limit || 1)) * 100).toFixed(1) + '% 已用'"></span>
-                            </div>
-                            <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                                <div class="h-1.5 rounded-full transition-all duration-300"
-                                     :class="(card.spent / card.limit) > 0.8 ? 'bg-rose-500' : ((card.spent / card.limit) > 0.5 ? 'bg-amber-400' : 'bg-emerald-400')"
-                                     :style="`width: ${Math.min((card.spent / (card.limit || 1)) * 100, 100)}%`"></div>
                             </div>
                             <div class="pt-2 flex justify-end">
                                 <button @click="openTxModal('credit', card.id)" class="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1">
@@ -471,37 +499,33 @@
                         </div>
                     </div>
                 </template>
-                <div x-show="creditCards.length === 0" class="col-span-full py-12 text-center text-slate-500 bg-slate-800/40 rounded-2xl border border-dashed border-slate-700">
-                    尚無信用卡資料，點擊右上角新增。
-                </div>
             </div>
         </div>
 
-        <!-- Tab 4: 明細紀錄 (Transactions Log Tab) -->
+        <!-- Tab 4: 明細紀錄 -->
         <div x-show="activeTab === 'transactions'" x-cloak class="space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800 p-5 rounded-2xl border border-slate-700/80">
                 <div>
                     <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-indigo-400"></i> 收支交易明細紀錄
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">點擊右側金額欄位可個別切換完整小數點顯示</p>
                 </div>
                 <button @click="openTxModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> 新增一筆紀錄
                 </button>
             </div>
 
-            <!-- 交易列表 (Transactions Table) -->
+            <!-- 交易列表 -->
             <div class="bg-slate-800 border border-slate-700/80 rounded-2xl overflow-hidden shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-900/80 text-slate-400 text-xs font-semibold uppercase border-b border-slate-700">
                                 <th class="py-3.5 px-4">日期時間</th>
-                                <th class="py-3.5 px-4">帳戶 / 信用卡</th>
+                                <th class="py-3.5 px-4">帳戶 / 現金 / 信用卡</th>
                                 <th class="py-3.5 px-4">類別</th>
                                 <th class="py-3.5 px-4">備註</th>
-                                <th class="py-3.5 px-4 text-right">金額 (HKD) <i class="fa-solid fa-hand-pointer text-[10px] ml-1"></i></th>
+                                <th class="py-3.5 px-4 text-right">金額 (HKD)</th>
                                 <th class="py-3.5 px-4 text-center">操作</th>
                             </tr>
                         </thead>
@@ -519,8 +543,7 @@
                                     <td class="py-3.5 px-4 text-slate-400 text-xs" x-text="tx.notes || '-'"></td>
                                     <td class="py-3.5 px-4 text-right font-bold whitespace-nowrap money-click" 
                                         :class="tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'"
-                                        @click="toggleItemPrecision('tx_tab_' + tx.id)"
-                                        title="點擊切換小數點">
+                                        @click="toggleItemPrecision('tx_tab_' + tx.id)">
                                         <span x-text="tx.type === 'income' ? '+' : '-'"></span>
                                         HK$ <span x-text="formatMoney(tx.amount, 'tx_tab_' + tx.id)"></span>
                                     </td>
@@ -531,11 +554,6 @@
                                     </td>
                                 </tr>
                             </template>
-                            <tr x-show="transactions.length === 0">
-                                <td colspan="6" class="py-10 text-center text-slate-500 text-xs">
-                                    尚無交易紀錄，點擊右上角新增。
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -544,7 +562,7 @@
 
     </main>
 
-    <!-- 手機版底部導航欄 (Mobile Bottom Nav Bar) -->
+    <!-- 手機版底部導航欄 -->
     <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-slate-800/95 backdrop-blur-lg border-t border-slate-700 z-40 px-2 py-2">
         <div class="grid grid-cols-4 gap-1 text-center">
             <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'text-indigo-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
@@ -553,7 +571,7 @@
             </button>
             <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-emerald-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
                 <i class="fa-solid fa-building-columns text-lg mb-1"></i>
-                <span class="text-[10px]">銀行帳戶</span>
+                <span class="text-[10px]">銀行/現金</span>
             </button>
             <button @click="activeTab = 'credits'" :class="activeTab === 'credits' ? 'text-rose-400 font-bold' : 'text-slate-400'" class="flex flex-col items-center py-1 transition">
                 <i class="fa-solid fa-credit-card text-lg mb-1"></i>
@@ -566,6 +584,79 @@
         </div>
     </nav>
 
+    <!-- 📱 手機端數據管理彈窗 (JSON下載/上載/重置) -->
+    <div x-cloak x-show="showDataMenuModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.outside="showDataMenuModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xs w-full p-5 space-y-4 text-center">
+            <h3 class="text-sm font-bold text-slate-100 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-database text-indigo-400"></i> 數據備份與管理
+            </h3>
+            <div class="space-y-2 pt-2">
+                <button @click="exportData(); showDataMenuModal = false;" class="w-full py-2 text-xs font-semibold text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> 下載備份 (JSON)
+                </button>
+                <label class="w-full py-2 text-xs font-semibold text-white bg-slate-700 hover:bg-slate-600 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-upload"></i> 上載還原 (JSON)
+                    <input type="file" accept=".json" @change="importData($event); showDataMenuModal = false;" class="hidden">
+                </label>
+                <button @click="confirmReset(); showDataMenuModal = false;" class="w-full py-2 text-xs font-semibold text-rose-400 bg-rose-950/50 border border-rose-800/60 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-left"></i> 重置所有資料
+                </button>
+            </div>
+            <button @click="showDataMenuModal = false" class="text-xs text-slate-400 hover:text-white pt-2">關閉</button>
+        </div>
+    </div>
+
+    <!-- 現金 Modal -->
+    <div x-cloak x-show="showCashModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.outside="showCashModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="text-base font-bold" x-text="isEditBank ? '編輯現金帳戶' : '新增現金帳戶'"></h3>
+                <button @click="showCashModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form @submit.prevent="saveCashAccount()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">現金名稱</label>
+                    <input type="text" x-model="bankForm.cashName" placeholder="例如: 港幣銀包、旅遊泰銖現金" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">現金幣別</label>
+                        <select x-model="bankForm.currency" @change="updateExchangeRate()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                            <option value="HKD">HKD (港幣 - 計算落總存款)</option>
+                            <option value="RMB">RMB (人民幣)</option>
+                            <option value="USD">USD (美金)</option>
+                            <option value="SGD">SGD (波紙/新加坡幣)</option>
+                            <option value="THB">THB (泰銖)</option>
+                            <option value="AUD">AUD (澳元)</option>
+                            <option value="VND">VND (越南盾)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">對 HKD 匯率</label>
+                        <input type="number" step="0.00000001" x-model.number="bankForm.exchangeRate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">目前現金金額 (原幣)</label>
+                    <input type="number" step="0.00000001" x-model.number="bankForm.rawBalance" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">備註說明</label>
+                    <input type="text" x-model="bankForm.notes" placeholder="例如: 隨身銀包" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
+                    <button type="button" @click="showCashModal = false" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 rounded-xl transition">取消</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-xl transition">儲存現金</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 銀行帳戶 Modal -->
     <div x-cloak x-show="showBankModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.outside="showBankModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
@@ -577,28 +668,28 @@
             <form @submit.prevent="saveBankAccount()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">銀行機構</label>
-                    <input type="text" list="hkBankList" x-model="bankForm.bankName" placeholder="例如: HSBC 匯豐, Hang Seng 恒生, Mox" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                    <!-- ✨ 定義 hkBankList -->
+                    <input type="text" list="hkBankList" x-model="bankForm.bankName" placeholder="例如: HSBC 匯豐銀行" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                     <datalist id="hkBankList">
                         <option value="HSBC 匯豐銀行"></option>
                         <option value="Hang Seng 恒生銀行"></option>
                         <option value="Bank of China 中國銀行(香港)"></option>
-                        <option value="Standard Chartered 渣打銀行"></option>
                         <option value="Mox Bank"></option>
-                        <option value="ZA Bank 眾安銀行"></option>
-                        <option value="Livi Bank"></option>
-                        <option value="Citi 花旗銀行"></option>
+                        <option value="AlipayHK"></option>
+                        <option value="賽馬會"></option>
+                        <option value="八達通"></option>
                     </datalist>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">帳戶名稱 / 類別</label>
-                    <input type="text" x-model="bankForm.accountName" placeholder="例如: 港幣儲蓄戶口、外幣理財戶" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                    <input type="text" x-model="bankForm.accountName" placeholder="例如: 港幣儲蓄戶口" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">幣別</label>
-                        <select x-model="bankForm.currency" @change="updateExchangeRate()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                        <select x-model="bankForm.currency" @change="updateExchangeRate()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                             <option value="HKD">HKD (港幣)</option>
                             <option value="USD">USD (美元)</option>
                             <option value="RMB">RMB (人民幣)</option>
@@ -608,18 +699,13 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">對 HKD 匯率</label>
-                        <input type="number" step="0.00000001" x-model.number="bankForm.exchangeRate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                        <input type="number" step="0.00000001" x-model.number="bankForm.exchangeRate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">目前存款餘額 (原幣)</label>
-                    <input type="number" step="0.00000001" x-model.number="bankForm.rawBalance" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">備註說明</label>
-                    <input type="text" x-model="bankForm.notes" placeholder="例如: 主要出糧戶口" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-slate-100">
+                    <input type="number" step="0.00000001" x-model.number="bankForm.rawBalance" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
@@ -630,7 +716,7 @@
         </div>
     </div>
 
-    <!-- 信用卡 Modal -->
+    <!-- 信用卡 Modal (預設 $10000 信用額，分離月結日與還款日) -->
     <div x-cloak x-show="showCreditModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.outside="showCreditModal = false" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 text-slate-100">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
@@ -641,49 +727,56 @@
             <form @submit.prevent="saveCreditCard()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">發卡機構</label>
-                    <input type="text" list="hkCreditBankList" x-model="creditForm.bankName" placeholder="例如: HSBC 匯豐, 安信, 花旗" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                    <!-- ✨ 定義 hkCreditBankList -->
+                    <input type="text" list="hkCreditBankList" x-model="creditForm.bankName" placeholder="例如: HSBC 匯豐銀行" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                     <datalist id="hkCreditBankList">
-                        <option value="HSBC 匯豐"></option>
-                        <option value="Hang Seng 恒生"></option>
-                        <option value="Citi 花旗"></option>
-                        <option value="安信 EarnMORE"></option>
-                        <option value="Standard Chartered 渣打"></option>
-                        <option value="Mox Credit"></option>
-                        <option value="中銀香港"></option>
+                        <option value="HSBC 匯豐銀行"></option>
+                        <option value="Hang Seng 恒生銀行"></option>
+                        <option value="Bank of China 中國銀行(香港)"></option>
+                        <option value="Mox Bank"></option>
+                        <option value="Bank of East Asia 東亞銀行"></option>
+                        <option value="AEON"></option>
+                        <option value="sim credit"></option>
                     </datalist>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡名稱</label>
-                    <input type="text" x-model="creditForm.cardName" placeholder="例如: HSBC Red 卡, EveryMile" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                    <input type="text" x-model="creditForm.cardName" placeholder="例如: HSBC Red 卡, EveryMile" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                </div>
+
+                <!-- 🔗 共享額度設定 -->
+                <div class="p-3 bg-slate-900/90 border border-indigo-800/50 rounded-xl space-y-1.5">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" x-model="creditForm.isSharedLimit" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-xs font-semibold text-indigo-300">與同一間銀行嘅信用卡共享信用額</span>
+                    </label>
+                    <p x-show="creditForm.isSharedLimit" class="text-[11px] text-slate-400">
+                        勾選後，同銀行的共享信用卡會自動共用此總信用額度。
+                    </p>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡總額度 (HKD Total Limit)</label>
-                    <input type="number" step="0.0001" x-model.number="creditForm.limit" @input="onLimitChange()" required placeholder="例如: 10000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
-                </div>
-
-                <div class="p-3 bg-slate-900/80 border border-rose-900/40 rounded-xl space-y-3">
-                    <div class="text-[11px] font-semibold text-rose-300 flex items-center justify-between">
-                        <span><i class="fa-solid fa-calculator"></i> 額度雙向自動對算</span>
-                        <span class="text-[10px] text-slate-400">填寫任意一項，另一項自動推算</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[11px] font-medium text-slate-300 mb-1">已刷卡/欠款 (Spent)</label>
-                            <input type="number" step="0.0001" x-model.number="creditForm.spent" @input="onSpentChange()" placeholder="0" class="w-full px-3 py-2 bg-slate-800 border border-rose-800/60 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-rose-400 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-slate-300 mb-1">剩餘可用額度 (Remaining)</label>
-                            <input type="number" step="0.0001" x-model.number="creditForm.remaining" @input="onRemainingChange()" placeholder="0" class="w-full px-3 py-2 bg-slate-800 border border-emerald-800/60 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm text-emerald-400 font-bold">
-                        </div>
-                    </div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">信用卡總額度 (HKD Limit)</label>
+                    <!-- ✨ Default $10000 -->
+                    <input type="number" step="0.0001" x-model.number="creditForm.limit" required placeholder="10000" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">每月繳款截止日 (期)</label>
-                    <input type="number" min="1" max="31" x-model.number="creditForm.dueDate" placeholder="例如: 15 (代表每月15號)" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 text-sm text-slate-100">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">目前已刷/欠款 (HKD Spent)</label>
+                    <input type="number" step="0.0001" x-model.number="creditForm.spent" required placeholder="0" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-rose-400 font-bold">
+                </div>
+
+                <!-- ✨ 獨立月結日與還款日 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">每月月結日 (1-31號)</label>
+                        <input type="number" min="1" max="31" x-model.number="creditForm.statementDate" placeholder="例如: 1 號" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">每月還款日 (1-31號)</label>
+                        <input type="number" min="1" max="31" x-model.number="creditForm.dueDate" placeholder="例如: 25 號" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                    </div>
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-4 border-t border-slate-700">
@@ -713,16 +806,16 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">扣款/入賬之帳戶或信用卡</label>
-                    <select x-model="txForm.targetCompositeKey" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
-                        <optgroup label="銀行帳戶 (Bank Accounts)">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">扣款/入賬之帳戶、現金或信用卡</label>
+                    <select x-model="txForm.targetCompositeKey" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
+                        <optgroup label="銀行帳戶與現金 (Bank & Cash)">
                             <template x-for="b in bankAccounts" :key="'bank_' + b.id">
-                                <option :value="'bank_' + b.id" x-text="b.bankName + ' - ' + b.accountName"></option>
+                                <option :value="'bank_' + b.id" x-text="(b.isCash ? '[現金] ' : '[銀行] ') + b.bankName + ' - ' + (b.accountName || b.cashName)"></option>
                             </template>
                         </optgroup>
                         <optgroup label="信用卡 (Credit Cards)">
                             <template x-for="c in creditCards" :key="'credit_' + c.id">
-                                <option :value="'credit_' + c.id" x-text="c.bankName + ' - ' + c.cardName"></option>
+                                <option :value="'credit_' + c.id" x-text="'[信用卡] ' + c.bankName + ' - ' + c.cardName"></option>
                             </template>
                         </optgroup>
                     </select>
@@ -731,16 +824,17 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">金額 (HKD)</label>
-                        <input type="number" step="0.00000001" min="0.00000001" x-model.number="txForm.amount" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100 font-bold">
+                        <input type="number" step="0.00000001" min="0.00000001" x-model.number="txForm.amount" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 font-bold">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">類別</label>
-                        <select x-model="txForm.category" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                        <select x-model="txForm.category" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                             <option value="飲食外賣">飲食外賣</option>
                             <option value="日常購物">日常購物</option>
                             <option value="交通出行">交通出行</option>
                             <option value="房屋水電">房屋水電</option>
                             <option value="娛樂休閒">娛樂休閒</option>
+                            <option value="外幣兌換">外幣兌換</option>
                             <option value="薪資出糧">薪資出糧</option>
                             <option value="卡費還款">卡費還款</option>
                             <option value="其他收支">其他收支</option>
@@ -751,11 +845,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">日期</label>
-                        <input type="date" x-model="txForm.date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                        <input type="date" x-model="txForm.date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">備註說明</label>
-                        <input type="text" x-model="txForm.notes" placeholder="例如: 午餐、超市購物" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm text-slate-100">
+                        <input type="text" x-model="txForm.notes" placeholder="例如: 泰國旅遊現金支出" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100">
                     </div>
                 </div>
 
@@ -776,18 +870,19 @@
                 creditCards: [],
                 transactions: [],
 
-                // 靈活位數顯示模式: '2dp' (2位小數), 'unit' (個位數/整數), 'full' (完整高精度)
                 precisionMode: '2dp',
-                itemPrecisions: {}, // 個別點擊切換狀態
+                itemPrecisions: {},
 
                 // Modals
+                showDataMenuModal: false,
                 showBankModal: false,
+                showCashModal: false,
                 isEditBank: false,
-                bankForm: { id: null, bankName: '', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '' },
+                bankForm: { id: null, bankName: '', accountName: '', cashName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '', isCash: false },
 
                 showCreditModal: false,
                 isEditCredit: false,
-                creditForm: { id: null, bankName: '', cardName: '', limit: 10000, spent: 0, remaining: 10000, dueDate: '' },
+                creditForm: { id: null, bankName: '', cardName: '', limit: 10000, spent: 0, statementDate: '', dueDate: '', isSharedLimit: false },
 
                 showTxModal: false,
                 txForm: { type: 'expense', targetCompositeKey: '', amount: '', category: '飲食外賣', date: new Date().toISOString().slice(0, 10), notes: '' },
@@ -797,19 +892,17 @@
 
                 defaultData: {
                     bankAccounts: [
-                        { id: 1, bankName: 'HSBC 匯豐銀行', accountName: '港幣出糧戶口', currency: 'HKD', exchangeRate: 1, rawBalance: 128500.4582, balance: 128500.4582, notes: '主要薪水與轉款戶口' },
-                        { id: 2, bankName: 'Mox Bank', accountName: '高息儲蓄戶口', currency: 'HKD', exchangeRate: 1, rawBalance: 65000.12, balance: 65000.12, notes: '活期高息存款' },
-                        { id: 3, bankName: 'Standard Chartered 渣打', accountName: '美金投資戶口', currency: 'USD', exchangeRate: 7.82451, rawBalance: 3500.88, balance: 27392.67305, notes: '美股與外幣投資' }
+                        { id: 1, bankName: 'HSBC 匯豐銀行', accountName: '港幣出糧戶口', currency: 'HKD', exchangeRate: 1, rawBalance: 128500.45, balance: 128500.45, notes: '主要薪水戶口', isCash: false },
+                        { id: 2, bankName: '現金', cashName: '港幣現金銀包', currency: 'HKD', exchangeRate: 1, rawBalance: 2500, balance: 2500, notes: '日常港幣現金', isCash: true },
+                        { id: 3, bankName: '現金', cashName: '人民幣現金', currency: 'RMB', exchangeRate: 1.08, rawBalance: 3000, balance: 3240, notes: '北上深圳消費', isCash: true },
+                        { id: 4, bankName: '現金', cashName: '泰銖現金', currency: 'THB', exchangeRate: 0.23, rawBalance: 15000, balance: 3450, notes: '泰國旅遊備用', isCash: true }
                     ],
                     creditCards: [
-                        { id: 1, bankName: 'HSBC 匯豐', cardName: 'HSBC Red 卡', limit: 80000, spent: 12400.35, remaining: 67599.65, dueDate: 15 },
-                        { id: 2, bankName: '安信', cardName: 'EarnMORE 2%回贈卡', limit: 50000, spent: 4500.105, remaining: 45499.895, dueDate: 22 },
-                        { id: 3, bankName: 'Hang Seng 恒生', cardName: 'MMK 購物卡', limit: 60000, spent: 18200, remaining: 41800, dueDate: 5 }
+                        { id: 1, bankName: 'HSBC 匯豐銀行', cardName: 'HSBC Red 卡', limit: 50000, spent: 12400.35, statementDate: 1, dueDate: 25, isSharedLimit: true },
+                        { id: 2, bankName: 'HSBC 匯豐銀行', cardName: 'EveryMile 卡', limit: 50000, spent: 4200.00, statementDate: 1, dueDate: 25, isSharedLimit: true },
+                        { id: 3, bankName: 'Hang Seng 恒生銀行', cardName: 'MMK 卡', limit: 10000, spent: 2500.00, statementDate: 5, dueDate: 20, isSharedLimit: false }
                     ],
-                    transactions: [
-                        { id: 101, date: new Date().toISOString().slice(0, 10), targetType: 'credit', targetId: 1, targetName: 'HSBC 匯豐 - HSBC Red 卡', type: 'expense', amount: 880.50, category: '日常購物', notes: '網購日用品' },
-                        { id: 102, date: new Date().toISOString().slice(0, 10), targetType: 'bank', targetId: 1, targetName: 'HSBC 匯豐銀行 - 港幣出糧戶口', type: 'income', amount: 35000.00, category: '薪資出糧', notes: '本月薪資收入' }
-                    ]
+                    transactions: []
                 },
 
                 initApp() {
@@ -821,52 +914,22 @@
                     this.$watch('bankAccounts', () => { this.saveData(); this.updateCharts(); }, { deep: true });
                     this.$watch('creditCards', () => { this.saveData(); this.updateCharts(); }, { deep: true });
                     this.$watch('transactions', () => { this.saveData(); this.updateCharts(); }, { deep: true });
-                    this.$watch('precisionMode', () => { this.saveData(); });
                 },
 
-                // 數據自動升級與跨 LocalStorage Key 相容拯救處理
                 loadStoredData() {
-                    const PRIMARY_KEY = 'hk_finance_tracker_v3';
-                    
-                    // 所有歷史與跨版本的 LocalStorage Key 清單（確保絕不丟失資料）
-                    const HISTORICAL_KEYS = [
-                        'hk_finance_tracker_v3',
-                        'hk_finance_tracker_data_v1',
-                        'hk_finance_data_v2',
-                        'hk_finance_app_v2',
-                        'hk_finance_app_v1',
-                        'hk_finance_data'
-                    ];
-
-                    let foundData = null;
-
-                    for (const key of HISTORICAL_KEYS) {
-                        const raw = localStorage.getItem(key);
-                        if (raw) {
-                            try {
-                                const parsed = JSON.parse(raw);
-                                if (parsed && (
-                                    (parsed.bankAccounts && parsed.bankAccounts.length > 0) || 
-                                    (parsed.creditCards && parsed.creditCards.length > 0) || 
-                                    (parsed.transactions && parsed.transactions.length > 0)
-                                )) {
-                                    foundData = parsed;
-                                    break;
-                                }
-                            } catch (e) {
-                                console.error('Error parsing localStorage key:', key, e);
-                            }
+                    const PRIMARY_KEY = 'hk_finance_tracker_v5';
+                    const raw = localStorage.getItem(PRIMARY_KEY) || localStorage.getItem('hk_finance_tracker_v4') || localStorage.getItem('hk_finance_tracker_v3');
+                    if (raw) {
+                        try {
+                            const parsed = JSON.parse(raw);
+                            this.bankAccounts = parsed.bankAccounts || [];
+                            this.creditCards = parsed.creditCards || [];
+                            this.transactions = parsed.transactions || [];
+                            this.precisionMode = parsed.precisionMode || '2dp';
+                        } catch(e) {
+                            this.loadDefaultData();
                         }
-                    }
-
-                    if (foundData) {
-                        this.bankAccounts = foundData.bankAccounts || [];
-                        this.creditCards = foundData.creditCards || [];
-                        this.transactions = foundData.transactions || [];
-                        this.precisionMode = foundData.precisionMode || '2dp';
-                        this.saveData(); // 無縫重寫至標準 Primary Key
                     } else {
-                        // 僅在無任何歷史 LocalStorage 紀錄時加載預設範例
                         this.loadDefaultData();
                     }
                 },
@@ -886,18 +949,10 @@
                         transactions: this.transactions,
                         precisionMode: this.precisionMode
                     };
-                    
-                    const PRIMARY_KEY = 'hk_finance_tracker_v3';
-                    localStorage.setItem(PRIMARY_KEY, JSON.stringify(dataObj));
-                    localStorage.setItem('hk_finance_tracker_data_v1', JSON.stringify(dataObj));
-                    localStorage.setItem('hk_finance_data_v2', JSON.stringify(dataObj));
+                    localStorage.setItem('hk_finance_tracker_v5', JSON.stringify(dataObj));
                 },
 
-                // 數值格式化: 2位小數 (2dp) / 個位數 (unit) / 完整小數 (full)
-                setGlobalPrecision(mode) {
-                    this.precisionMode = mode;
-                },
-
+                setGlobalPrecision(mode) { this.precisionMode = mode; },
                 toggleItemPrecision(key) {
                     this.itemPrecisions[key] = !this.itemPrecisions[key];
                     this.itemPrecisions = { ...this.itemPrecisions };
@@ -906,8 +961,6 @@
                 formatMoney(val, key = null) {
                     if (val === undefined || val === null || isNaN(val)) return '0';
                     const num = Number(val);
-
-                    // 若用戶點擊該單一金額，優先顯示完整小數點
                     const isItemOverridden = key && !!this.itemPrecisions[key];
 
                     if (isItemOverridden || this.precisionMode === 'full') {
@@ -915,47 +968,252 @@
                         const intPart = Number(parts[0]).toLocaleString('en-US');
                         return parts.length > 1 ? `${intPart}.${parts[1].substring(0, 8)}` : `${intPart}.00`;
                     } else if (this.precisionMode === 'unit') {
-                        // 取至整數個位數 (Unit Digits)
                         return Math.round(num).toLocaleString('en-US');
                     } else {
-                        // 預設 2 位小數 (2dp)
-                        return num.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
+                        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     }
                 },
 
-                // 計算屬性
+                // 💡 港幣存款 (銀行存款 + 港幣現金)
                 get totalBankBalance() {
-                    return this.bankAccounts.reduce((sum, a) => sum + Number(a.balance || 0), 0);
+                    return this.bankAccounts
+                        .filter(a => !a.isCash || (a.isCash && a.currency === 'HKD'))
+                        .reduce((sum, a) => sum + Number(a.balance || 0), 0);
+                },
+
+                get hkdCashBalance() {
+                    return this.bankAccounts
+                        .filter(a => a.isCash && a.currency === 'HKD')
+                        .reduce((sum, a) => sum + Number(a.balance || 0), 0);
+                },
+
+                // 外幣現金清單
+                get foreignCashList() {
+                    return this.bankAccounts.filter(a => a.isCash && a.currency !== 'HKD');
+                },
+
+                // ✨ 所有外幣折合港幣總額
+                get totalForeignCashHkdBalance() {
+                    return this.foreignCashList.reduce((sum, a) => sum + Number(a.balance || 0), 0);
                 },
 
                 get totalCreditSpent() {
                     return this.creditCards.reduce((sum, c) => sum + Number(c.spent || 0), 0);
                 },
 
-                get totalCreditRemaining() {
-                    return this.creditCards.reduce((sum, c) => sum + Number(c.remaining || 0), 0);
-                },
-
-                get totalCreditLimit() {
-                    return this.creditCards.reduce((sum, c) => sum + Number(c.limit || 0), 0);
-                },
-
                 get netWorth() {
                     return this.totalBankBalance - this.totalCreditSpent;
                 },
 
-                get creditUtilizationRate() {
-                    if (this.totalCreditLimit === 0) return 0;
-                    return (this.totalCreditSpent / this.totalCreditLimit) * 100;
+                // 💳 信用卡共享額度剩餘計算
+                getCardRemaining(card) {
+                    if (!card.isSharedLimit) {
+                        return (card.limit || 0) - (card.spent || 0);
+                    }
+                    const sameBankCards = this.creditCards.filter(c => c.bankName === card.bankName && c.isSharedLimit);
+                    const totalSharedSpent = sameBankCards.reduce((s, c) => s + Number(c.spent || 0), 0);
+                    return (card.limit || 0) - totalSharedSpent;
+                },
+
+                // ⏰ 基於「還款日 (dueDate)」計算倒數
+                get upcomingPayments() {
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth();
+
+                    return this.creditCards
+                        .filter(c => Number(c.spent || 0) > 0 && c.dueDate)
+                        .map(c => {
+                            let dueDay = Number(c.dueDate);
+                            let targetDate = new Date(currentYear, currentMonth, dueDay);
+                            
+                            // 若這個月還款日已過，計算至下個月
+                            if (targetDate < new Date(currentYear, currentMonth, today.getDate() - 2)) {
+                                targetDate = new Date(currentYear, currentMonth + 1, dueDay);
+                            }
+
+                            const diffTime = targetDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                            const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                            return {
+                                ...c,
+                                nextDueDateStr: `${targetDate.getMonth() + 1}月${targetDate.getDate()}日`,
+                                daysLeft: daysLeft
+                            };
+                        })
+                        .sort((a, b) => a.daysLeft - b.daysLeft);
+                },
+
+                // Modal 功能
+                openCashModal() {
+                    this.isEditBank = false;
+                    this.bankForm = { id: Date.now(), bankName: '現金', cashName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '', isCash: true };
+                    this.showCashModal = true;
+                },
+
+                editCashModal(acc) {
+                    this.isEditBank = true;
+                    this.bankForm = JSON.parse(JSON.stringify(acc));
+                    this.showCashModal = true;
+                },
+
+                saveCashAccount() {
+                    this.bankForm.bankName = '現金';
+                    this.bankForm.accountName = this.bankForm.cashName;
+                    this.bankForm.isCash = true;
+                    this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate || 1);
+
+                    if (this.isEditBank) {
+                        const idx = this.bankAccounts.findIndex(a => a.id === this.bankForm.id);
+                        if (idx !== -1) this.bankAccounts[idx] = { ...this.bankForm };
+                    } else {
+                        this.bankAccounts.push({ ...this.bankForm });
+                    }
+                    this.showCashModal = false;
+                },
+
+                openBankModal() {
+                    this.isEditBank = false;
+                    this.bankForm = { id: Date.now(), bankName: 'HSBC 匯豐銀行', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '', isCash: false };
+                    this.showBankModal = true;
+                },
+
+                editBankModal(acc) {
+                    this.isEditBank = true;
+                    this.bankForm = JSON.parse(JSON.stringify(acc));
+                    this.showBankModal = true;
+                },
+
+                updateExchangeRate() {
+                    const rates = { HKD: 1, RMB: 1.08, USD: 7.85, SGD: 5.85, THB: 0.23, AUD: 5.15, VND: 0.00031, JPY: 0.05, GBP: 10.12 };
+                    this.bankForm.exchangeRate = rates[this.bankForm.currency] || 1;
+                },
+
+                saveBankAccount() {
+                    this.bankForm.isCash = false;
+                    this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate || 1);
+                    if (this.isEditBank) {
+                        const idx = this.bankAccounts.findIndex(a => a.id === this.bankForm.id);
+                        if (idx !== -1) this.bankAccounts[idx] = { ...this.bankForm };
+                    } else {
+                        this.bankAccounts.push({ ...this.bankForm });
+                    }
+                    this.showBankModal = false;
+                },
+
+                deleteBankAccount(id) {
+                    if (confirm('確定刪除此帳戶/現金項目？')) {
+                        this.bankAccounts = this.bankAccounts.filter(a => a.id !== id);
+                    }
+                },
+
+                openCreditModal() {
+                    this.isEditCredit = false;
+                    // ✨ Default limit: $10,000
+                    this.creditForm = { id: Date.now(), bankName: 'HSBC 匯豐銀行', cardName: '', limit: 10000, spent: 0, statementDate: '', dueDate: '', isSharedLimit: false };
+                    this.showCreditModal = true;
+                },
+
+                editCreditModal(card) {
+                    this.isEditCredit = true;
+                    this.creditForm = JSON.parse(JSON.stringify(card));
+                    this.showCreditModal = true;
+                },
+
+                saveCreditCard() {
+                    if (this.isEditCredit) {
+                        const idx = this.creditCards.findIndex(c => c.id === this.creditForm.id);
+                        if (idx !== -1) this.creditCards[idx] = { ...this.creditForm };
+                    } else {
+                        this.creditCards.push({ ...this.creditForm });
+                    }
+                    this.showCreditModal = false;
+                },
+
+                deleteCreditCard(id) {
+                    if (confirm('確定刪除此信用卡？')) {
+                        this.creditCards = this.creditCards.filter(c => c.id !== id);
+                    }
+                },
+
+                openTxModal(preType = null, preId = null) {
+                    let defaultKey = '';
+                    if (preType === 'bank' && preId) defaultKey = 'bank_' + preId;
+                    else if (preType === 'credit' && preId) defaultKey = 'credit_' + preId;
+                    else if (this.bankAccounts.length > 0) defaultKey = 'bank_' + this.bankAccounts[0].id;
+
+                    this.txForm = {
+                        type: 'expense',
+                        targetCompositeKey: defaultKey,
+                        amount: '',
+                        category: '飲食外賣',
+                        date: new Date().toISOString().slice(0, 10),
+                        notes: ''
+                    };
+                    this.showTxModal = true;
+                },
+
+                saveTransaction() {
+                    if (!this.txForm.targetCompositeKey || !this.txForm.amount) return;
+
+                    const [targetType, targetIdStr] = this.txForm.targetCompositeKey.split('_');
+                    const targetId = Number(targetIdStr);
+                    const amount = Number(this.txForm.amount);
+                    let targetName = '';
+
+                    if (targetType === 'bank') {
+                        const acc = this.bankAccounts.find(b => b.id === targetId);
+                        if (acc) {
+                            targetName = (acc.isCash ? '[現金] ' : '[銀行] ') + `${acc.bankName} - ${acc.accountName || acc.cashName}`;
+                            const rawDiff = amount / (acc.exchangeRate || 1);
+                            acc.rawBalance = this.txForm.type === 'income' ? Number(acc.rawBalance) + rawDiff : Number(acc.rawBalance) - rawDiff;
+                            acc.balance = acc.rawBalance * (acc.exchangeRate || 1);
+                        }
+                    } else if (targetType === 'credit') {
+                        const card = this.creditCards.find(c => c.id === targetId);
+                        if (card) {
+                            targetName = `[信用卡] ${card.bankName} - ${card.cardName}`;
+                            card.spent = this.txForm.type === 'expense' ? Number(card.spent) + amount : Number(card.spent) - amount;
+                        }
+                    }
+
+                    this.transactions.unshift({
+                        id: Date.now(),
+                        date: this.txForm.date,
+                        targetType,
+                        targetId,
+                        targetName,
+                        type: this.txForm.type,
+                        amount,
+                        category: this.txForm.category,
+                        notes: this.txForm.notes
+                    });
+                    this.showTxModal = false;
+                },
+
+                deleteTransaction(id) {
+                    if (confirm('確定刪除此交易紀錄？')) {
+                        this.transactions = this.transactions.filter(t => t.id !== id);
+                    }
+                },
+
+                getCategoryIcon(cat) {
+                    const icons = {
+                        '飲食外賣': 'fa-solid fa-utensils',
+                        '日常購物': 'fa-solid fa-cart-shopping',
+                        '交通出行': 'fa-solid fa-bus',
+                        '房屋水電': 'fa-solid fa-house',
+                        '娛樂休閒': 'fa-solid fa-gamepad',
+                        '外幣兌換': 'fa-solid fa-coins',
+                        '薪資出糧': 'fa-solid fa-money-bill-wave',
+                        '卡費還款': 'fa-solid fa-credit-card',
+                        '其他收支': 'fa-solid fa-coins'
+                    };
+                    return icons[cat] || 'fa-solid fa-tag';
                 },
 
                 confirmReset() {
-                    if (confirm('確定要將所有數據重置為預設香港範例資料嗎？此動作無法撤銷。')) {
-                        this.loadDefaultData();
-                    }
+                    if (confirm('確定要將所有數據重置嗎？')) this.loadDefaultData();
                 },
 
                 exportData() {
@@ -995,189 +1253,6 @@
                     reader.readAsText(file);
                 },
 
-                // 雙向信用卡額度推算
-                onLimitChange() {
-                    const limit = Number(this.creditForm.limit) || 0;
-                    const spent = Number(this.creditForm.spent) || 0;
-                    this.creditForm.remaining = limit - spent;
-                },
-
-                onSpentChange() {
-                    const limit = Number(this.creditForm.limit) || 0;
-                    const spent = Number(this.creditForm.spent) || 0;
-                    this.creditForm.remaining = limit - spent;
-                },
-
-                onRemainingChange() {
-                    const limit = Number(this.creditForm.limit) || 0;
-                    const remaining = Number(this.creditForm.remaining) || 0;
-                    this.creditForm.spent = limit - remaining;
-                },
-
-                // 銀行帳戶 Modal
-                openBankModal() {
-                    this.isEditBank = false;
-                    this.bankForm = { id: Date.now(), bankName: '', accountName: '', currency: 'HKD', exchangeRate: 1, rawBalance: 0, balance: 0, notes: '' };
-                    this.showBankModal = true;
-                },
-
-                editBankModal(acc) {
-                    this.isEditBank = true;
-                    this.bankForm = JSON.parse(JSON.stringify(acc));
-                    this.showBankModal = true;
-                },
-
-                updateExchangeRate() {
-                    const rates = { HKD: 1, USD: 7.85, RMB: 1.17, JPY: 0.05, GBP: 10.124 };
-                    this.bankForm.exchangeRate = rates[this.bankForm.currency] || 1;
-                    this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate);
-                },
-
-                saveBankAccount() {
-                    this.bankForm.balance = Number(this.bankForm.rawBalance) * Number(this.bankForm.exchangeRate || 1);
-                    if (this.isEditBank) {
-                        const idx = this.bankAccounts.findIndex(a => a.id === this.bankForm.id);
-                        if (idx !== -1) this.bankAccounts[idx] = { ...this.bankForm };
-                    } else {
-                        this.bankAccounts.push({ ...this.bankForm });
-                    }
-                    this.showBankModal = false;
-                },
-
-                deleteBankAccount(id) {
-                    if (confirm('確定刪除此銀行帳戶？')) {
-                        this.bankAccounts = this.bankAccounts.filter(a => a.id !== id);
-                    }
-                },
-
-                // 信用卡 Modal
-                openCreditModal() {
-                    this.isEditCredit = false;
-                    this.creditForm = { id: Date.now(), bankName: '', cardName: '', limit: 10000, spent: 0, remaining: 10000, dueDate: '' };
-                    this.showCreditModal = true;
-                },
-
-                editCreditModal(card) {
-                    this.isEditCredit = true;
-                    this.creditForm = JSON.parse(JSON.stringify(card));
-                    this.showCreditModal = true;
-                },
-
-                saveCreditCard() {
-                    const limit = Number(this.creditForm.limit) || 0;
-                    const spent = Number(this.creditForm.spent) || 0;
-                    this.creditForm.remaining = limit - spent;
-
-                    if (this.isEditCredit) {
-                        const idx = this.creditCards.findIndex(c => c.id === this.creditForm.id);
-                        if (idx !== -1) this.creditCards[idx] = { ...this.creditForm };
-                    } else {
-                        this.creditCards.push({ ...this.creditForm });
-                    }
-                    this.showCreditModal = false;
-                },
-
-                deleteCreditCard(id) {
-                    if (confirm('確定刪除此信用卡？')) {
-                        this.creditCards = this.creditCards.filter(c => c.id !== id);
-                    }
-                },
-
-                // 交易記賬
-                openTxModal(preType = null, preId = null) {
-                    let defaultKey = '';
-                    if (preType === 'bank' && preId) {
-                        defaultKey = 'bank_' + preId;
-                    } else if (preType === 'credit' && preId) {
-                        defaultKey = 'credit_' + preId;
-                    } else if (this.bankAccounts.length > 0) {
-                        defaultKey = 'bank_' + this.bankAccounts[0].id;
-                    } else if (this.creditCards.length > 0) {
-                        defaultKey = 'credit_' + this.creditCards[0].id;
-                    }
-
-                    this.txForm = {
-                        type: 'expense',
-                        targetCompositeKey: defaultKey,
-                        amount: '',
-                        category: '飲食外賣',
-                        date: new Date().toISOString().slice(0, 10),
-                        notes: ''
-                    };
-                    this.showTxModal = true;
-                },
-
-                saveTransaction() {
-                    if (!this.txForm.targetCompositeKey || !this.txForm.amount) return;
-
-                    const [targetType, targetIdStr] = this.txForm.targetCompositeKey.split('_');
-                    const targetId = Number(targetIdStr);
-                    const amount = Number(this.txForm.amount);
-
-                    let targetName = '';
-
-                    if (targetType === 'bank') {
-                        const acc = this.bankAccounts.find(b => b.id === targetId);
-                        if (acc) {
-                            targetName = `${acc.bankName} - ${acc.accountName}`;
-                            const rawDiff = amount / (acc.exchangeRate || 1);
-                            if (this.txForm.type === 'income') {
-                                acc.rawBalance = Number(acc.rawBalance) + rawDiff;
-                            } else {
-                                acc.rawBalance = Number(acc.rawBalance) - rawDiff;
-                            }
-                            acc.balance = acc.rawBalance * (acc.exchangeRate || 1);
-                        }
-                    } else if (targetType === 'credit') {
-                        const card = this.creditCards.find(c => c.id === targetId);
-                        if (card) {
-                            targetName = `${card.bankName} - ${card.cardName}`;
-                            if (this.txForm.type === 'expense') {
-                                card.spent = Number(card.spent) + amount;
-                            } else {
-                                card.spent = Number(card.spent) - amount;
-                            }
-                            card.remaining = card.limit - card.spent;
-                        }
-                    }
-
-                    const newTx = {
-                        id: Date.now(),
-                        date: this.txForm.date,
-                        targetType,
-                        targetId,
-                        targetName,
-                        type: this.txForm.type,
-                        amount,
-                        category: this.txForm.category,
-                        notes: this.txForm.notes
-                    };
-
-                    this.transactions.unshift(newTx);
-                    this.showTxModal = false;
-                },
-
-                deleteTransaction(id) {
-                    if (confirm('確定刪除此交易紀錄？')) {
-                        this.transactions = this.transactions.filter(t => t.id !== id);
-                    }
-                },
-
-                getCategoryIcon(cat) {
-                    const icons = {
-                        '飲食外賣': 'fa-solid fa-utensils',
-                        '日常購物': 'fa-solid fa-cart-shopping',
-                        '交通出行': 'fa-solid fa-bus',
-                        '房屋水電': 'fa-solid fa-house',
-                        '娛樂休閒': 'fa-solid fa-gamepad',
-                        '薪資出糧': 'fa-solid fa-money-bill-wave',
-                        '卡費還款': 'fa-solid fa-credit-card',
-                        '其他收支': 'fa-solid fa-coins'
-                    };
-                    return icons[cat] || 'fa-solid fa-tag';
-                },
-
-                // 圖表渲染
                 initCharts() {
                     Chart.defaults.color = '#94a3b8';
                     Chart.defaults.borderColor = '#334155';
@@ -1186,7 +1261,7 @@
                     this.assetDebtChart = new Chart(ctxDoughnut, {
                         type: 'doughnut',
                         data: {
-                            labels: ['銀行總存款', '信用卡總欠款'],
+                            labels: ['銀行總存款(含港幣現金)', '信用卡總欠款'],
                             datasets: [{
                                 data: [this.totalBankBalance, this.totalCreditSpent],
                                 backgroundColor: ['#10b981', '#f43f5e'],
@@ -1196,9 +1271,7 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'bottom', labels: { font: { size: 11 } } }
-                            },
+                            plugins: { legend: { position: 'bottom' } },
                             cutout: '72%'
                         }
                     });
@@ -1210,19 +1283,13 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            scales: {
-                                y: { beginAtZero: true, grid: { color: '#1e293b' } },
-                                x: { grid: { display: false } }
-                            },
-                            plugins: {
-                                legend: { display: true, position: 'top', labels: { font: { size: 11 } } }
-                            }
+                            scales: { y: { beginAtZero: true } }
                         }
                     });
                 },
 
                 getBarChartData() {
-                    const bankLabels = this.bankAccounts.map(b => b.bankName);
+                    const bankLabels = this.bankAccounts.map(b => b.bankName + '-' + (b.accountName || b.cashName));
                     const bankData = this.bankAccounts.map(b => b.balance);
 
                     const cardLabels = this.creditCards.map(c => c.cardName);
@@ -1231,18 +1298,8 @@
                     return {
                         labels: [...bankLabels, ...cardLabels],
                         datasets: [
-                            {
-                                label: '存款餘額 (HKD)',
-                                data: [...bankData, ...cardLabels.map(() => 0)],
-                                backgroundColor: '#10b981',
-                                borderRadius: 6
-                            },
-                            {
-                                label: '刷卡欠款 (HKD)',
-                                data: [...bankLabels.map(() => 0), ...cardData],
-                                backgroundColor: '#f43f5e',
-                                borderRadius: 6
-                            }
+                            { label: '資產/存款 (HKD)', data: [...bankData, ...cardLabels.map(() => 0)], backgroundColor: '#10b981', borderRadius: 6 },
+                            { label: '刷卡欠款 (HKD)', data: [...bankLabels.map(() => 0), ...cardData], backgroundColor: '#f43f5e', borderRadius: 6 }
                         ]
                     };
                 },
